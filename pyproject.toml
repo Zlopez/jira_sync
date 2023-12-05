@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "jira-sync"
+version = "0.1.0"
+description = ""
+authors = ["Michal Konecny <mkonecny@redhat.com>"]
+readme = "README.md"
+packages = [{include = "jira_sync"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+jira = "^3.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
