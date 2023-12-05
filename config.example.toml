@@ -1,0 +1,18 @@
+# Example config for jira_sync
+
+# General configuration
+[General]
+jira_instance = "https://jira.attlasian.com"  # JIRA instance URL
+jira_project = "Project"  # Name of the project to sync tickets to
+jira_token = "token"  # API token to use for authentication
+
+# Pagure configuration
+[Pagure]
+enabled = true  # Enable/Disable Pagure backend
+pagure_url = "https://pagure.io/"  # URL for pagure endpoint
+# List of repositories to check for tickets
+# When label is set, only tickets with this label will be recovered
+repositories = [
+  { url = "https://pagure.io/test1", label = "" },
+  { url = "https://pagure.io/test2", label = "test" }
+]
