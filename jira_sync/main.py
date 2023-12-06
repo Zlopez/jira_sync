@@ -6,6 +6,7 @@ import click
 import jira
 import tomllib
 
+from jira_sync.pagure import Pagure
 
 @click.group()
 def cli():
@@ -23,10 +24,24 @@ def sync_tickets(since: str, config: str):
       since: How many days ago to look for closed issues.
       config: Path to configuration file.
     """
-    global CONFIG
-
     with open(config, "rb") as config_file:
-        CONFIG = tomllib.load(config_file)
+        config_dict = tomllib.load(config_file)
+
+    pagure_enabled = config_dict["Pagure"]["enabled"]
+
+    # Pagure is enabled in configuration
+    if pagure_enabled:
+        pagure_issues = []
+        pagure = Pagure(config_dict["Pagure"]["pagure_url"])
+
+        # Retrieve all open issues on the project
+        for repository in config_dict["Pagure"]["repositories"]:
+            pagure_issues.extend(
+                pagure.get_project_issues(repository["repo"])
+            )
+
+        click.echo(len(pagure_issues))
+
 
 if __name__ == "__main__":
     cli.add_command(sync_tickets)

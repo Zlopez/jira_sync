@@ -11,6 +11,7 @@ python = "^3.11"
 jira = "^3.5.2"
 click = "^8.1.7"
 toml = "^0.10.2"
+requests = "^2.31.0"
 
 
 [build-system]

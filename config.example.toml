@@ -13,6 +13,6 @@ pagure_url = "https://pagure.io/"  # URL for pagure endpoint
 # List of repositories to check for tickets
 # When label is set, only tickets with this label will be recovered
 repositories = [
-  { url = "https://pagure.io/test1", label = "" },
-  { url = "https://pagure.io/test2", label = "test" }
+  { repo = "namespace/test1", label = "" },
+  { repo = "test2", label = "test" }
 ]
