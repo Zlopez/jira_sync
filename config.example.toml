@@ -7,13 +7,31 @@ jira_project = "Project"  # Name of the project to sync tickets to
 jira_token = "token"  # API token to use for authentication
 jira_default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 
+# Map the ticket state to JIRA project state
+# Recognizable states are:
+# * new = ticket is open and nobody is assigned to it
+# * assigned = ticket is assigned to user
+# * blocked = ticket is blocked (see blocked_label in corresponding section)
+# * closed = ticket is closed
+[General.states]
+new = "NEW"
+assigned = "IN_PROGRESS"
+blocked = "BLOCKED"
+closed = "DONE"
+
 # Pagure configuration
 [Pagure]
 enabled = true  # Enable/Disable Pagure backend
 pagure_url = "https://pagure.io/"  # URL for pagure endpoint
+blocked_label = "blocked"  # Label that is marking blocked issues
 # List of repositories to check for tickets
 # When label is set, only tickets with this label will be recovered
 repositories = [
   { repo = "namespace/test1", label = "" },
   { repo = "test2", label = "test" }
 ]
+
+# Map of pagure usernames to jira
+[Pagure.usernames]
+pagure_user1 = "jira_user1"
+pagure_user2 = "jira_user2"

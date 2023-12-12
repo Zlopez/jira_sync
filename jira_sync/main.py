@@ -35,32 +35,69 @@ def sync_tickets(since: str, config: str):
     )
 
     pagure_enabled = config_dict["Pagure"]["enabled"]
+    state_map = config_dict["General"]["states"]
 
     # Pagure is enabled in configuration
     if pagure_enabled:
+        pagure_usernames = config_dict["Pagure"]["usernames"]
         pagure_issues = []
         pagure = Pagure(config_dict["Pagure"]["pagure_url"])
 
         # Retrieve all open issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
+            repo_issues = pagure.get_project_issues(repository["repo"])
+            # Add project_name to use it later as JIRA label
+            for issue in repo_issues:
+                issue["project"] = repository["repo"]
+                if not issue["assignee"]:
+                    issue["ticket_state"] = "new"
+                else:
+                    issue["ticket_state"] = "assigned"
+                if "blocked" in issue["tags"]:
+                    issue["ticket_state"] = "blocked"
+                if issue["closed_at"]:
+                    issue["ticket_state"] = "closed"
             pagure_issues.extend(
-                pagure.get_project_issues(repository["repo"])
+                repo_issues
             )
 
-    issue = pagure_issues[0]
+        issue = pagure_issues[0]
 
-    jira_issue = jira.get_issue_by_link(issue["full_url"])
+        # The method returns list, but there should be only one issue
+        # per pagure ticket
+        jira_issues = jira.get_issue_by_link(issue["full_url"])
 
-    click.echo(jira_issue)
+        # There is something wrong if we find more than one issue
+        # for the ticket
+        if len(jira_issues) > 1:
+            click.echo(
+                "We found more than one issue for url '{}'".format(
+                    issue["full_url"]
+                ),
+                err=True)
+            click.echo(
+                "JIRA issues list for the url '{}': {}".format(
+                    issue["full_url"],
+                    [issue.id for issue in jira_issues]
+                ),
+                err=True)
 
-    if not jira_issue:
-        issue_id = jira.create_issue(
-            issue["title"],
-            issue["content"],
-            issue["full_url"]
-        )
+        if not jira_issues:
+            jira_issue = jira.create_issue(
+                issue["title"],
+                issue["content"],
+                issue["full_url"],
+                issue["project"],
+            )
+        else:
+            jira_issue = jira_issues[0]
 
-        click.echo(issue_id)
+        if issue["assignee"]:
+            jira.assign_to_issue(
+                jira_issue,
+                pagure_usernames[issue["assignee"]["username"]]
+            )
+        jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
 
 
 if __name__ == "__main__":
