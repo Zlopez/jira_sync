@@ -8,7 +8,7 @@ from typing import cast, Dict, List, Optional
 
 import jira
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class JIRA:
@@ -48,22 +48,29 @@ class JIRA:
         self.project = project
         self.issue_type = issue_type
 
-    def get_issue_by_link(self, url: str) -> List[jira.resources.Issue]:
+    def get_issue_by_link(
+            self, url: str, repo: str, title: str
+    ) -> List[jira.resources.Issue]:
         """
         Return issue that has external issue URL set to url.
 
         Params:
           url: URL to search for
+          repo: Project namespace/name
+          title: Title of the ticket
 
         Returns:
           Dictionary with retrieved issue or empty if nothing was retrieved.
         """
+        # Replace special characters
+        title = title.replace("[", "\\\\[")
+        title = title.replace("]", "\\\\]")
         issues = cast(
             jira.client.ResultList[jira.resources.Issue],
             self.jira.search_issues(
                 (
-                    'project = ' + self.project +
-                    ' AND Description ~ \"' + url + '\"'
+                    'project = ' + self.project + ' AND summary ~ \"' + title +
+                    '\" AND Description ~ \"' + url + '\" AND labels = ' + repo
                 )
             )
         )

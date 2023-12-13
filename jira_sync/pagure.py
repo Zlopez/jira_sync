@@ -6,9 +6,10 @@ See https://pagure.io/api/0
 import logging
 from typing import List
 
+import arrow
 import requests
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class Pagure:
@@ -28,16 +29,46 @@ class Pagure:
             url = url[:-1]
         self.instance_url = url
 
-    def get_project_issues(
-            self, repo: str, params: dict = {}
-    ) -> List:
+    def get_closed_project_issues(self, repo: str, days_ago: int) -> List:
         """
-        Retrieve all the project issues on project.
+        Retrieve closed issues on project that were closed in `days_ago`.
 
         Params:
           repo: Repository path. For example 'namespace/repo'
-          params: Additional params for request
-                  See https://pagure.io/api/0/#issues-tab
+          days_ago: Number of days to look in past for closed issues
+
+        Returns:
+          List of issues represented by dictionaries.
+        """
+        since_arg = arrow.utcnow().shift(days=-days_ago)
+        next_page = (
+            self.instance_url + "/api/0/" + repo +
+            "/issues?status=Closed&since=" + str(since_arg.int_timestamp)
+        )
+
+        issues = []
+
+        while next_page:
+            page_data = self._get_json(next_page)
+            if page_data:
+                issues.extend(page_data["issues"])
+                next_page = page_data["pagination"]["next"]
+
+        log.info(
+            "Retrieved {} closed issues from {}".format(
+                len(issues),
+                repo
+            )
+        )
+
+        return issues
+
+    def get_open_project_issues(self, repo: str) -> List:
+        """
+        Retrieve all open project issues on project.
+
+        Params:
+          repo: Repository path. For example 'namespace/repo'
 
         Returns:
           List of issues represented by dictionaries.
@@ -51,6 +82,13 @@ class Pagure:
             if page_data:
                 issues.extend(page_data["issues"])
                 next_page = page_data["pagination"]["next"]
+
+        log.info(
+            "Retrieved {} open issues from {}".format(
+                len(issues),
+                repo
+            )
+        )
 
         return issues
 

@@ -1,6 +1,7 @@
 """
 Script for synchronizing tickets from various trackers in JIRA project.
 """
+import logging
 
 import click
 import tomllib
@@ -8,20 +9,31 @@ import tomllib
 from jira_sync.pagure import Pagure
 from jira_sync.jira_wrapper import JIRA
 
+DEBUG = True
+
+
 @click.group()
 def cli():
     pass
 
+
 @click.command()
-@click.option("--since", help=("How many days ago to look for closed issues."
-                               "Expects date in DD.MM.YYYY format (31.12.2021)."))
-@click.option("--config", default="config.toml", help="Path to configuration file.")
-def sync_tickets(since: str, config: str):
+@click.option(
+    "--days-ago",
+    default=1,
+    help="How many days ago to look for closed issues."
+)
+@click.option(
+    "--config",
+    default="config.toml",
+    help="Path to configuration file."
+)
+def sync_tickets(days_ago: int, config: str):
     """
     Sync the ticket from sources provided in configuration file.
 
     Params:
-      since: How many days ago to look for closed issues.
+      days_ago: How many days ago to look for closed issues.
       config: Path to configuration file.
     """
     with open(config, "rb") as config_file:
@@ -43,11 +55,15 @@ def sync_tickets(since: str, config: str):
         pagure_issues = []
         pagure = Pagure(config_dict["Pagure"]["pagure_url"])
 
-        # Retrieve all open issues on the project
+        # Retrieve issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
-            repo_issues = pagure.get_project_issues(repository["repo"])
+            repo_issues = pagure.get_open_project_issues(repository["repo"])
+            repo_issues.extend(
+                pagure.get_closed_project_issues(repository["repo"], days_ago)
+            )
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:
+                log.debug("Processing issue: {}".format(issue["full_url"]))
                 issue["project"] = repository["repo"]
                 if not issue["assignee"]:
                     issue["ticket_state"] = "new"
@@ -61,45 +77,54 @@ def sync_tickets(since: str, config: str):
                 repo_issues
             )
 
-        issue = pagure_issues[0]
-
-        # The method returns list, but there should be only one issue
-        # per pagure ticket
-        jira_issues = jira.get_issue_by_link(issue["full_url"])
-
-        # There is something wrong if we find more than one issue
-        # for the ticket
-        if len(jira_issues) > 1:
-            click.echo(
-                "We found more than one issue for url '{}'".format(
-                    issue["full_url"]
-                ),
-                err=True)
-            click.echo(
-                "JIRA issues list for the url '{}': {}".format(
-                    issue["full_url"],
-                    [issue.id for issue in jira_issues]
-                ),
-                err=True)
-
-        if not jira_issues:
-            jira_issue = jira.create_issue(
-                issue["title"],
-                issue["content"],
+        for issue in pagure_issues:
+            # The method returns list, but there should be only one issue
+            # per pagure ticket
+            jira_issues = jira.get_issue_by_link(
                 issue["full_url"],
                 issue["project"],
+                issue["title"]
             )
-        else:
-            jira_issue = jira_issues[0]
 
-        if issue["assignee"]:
-            jira.assign_to_issue(
-                jira_issue,
-                pagure_usernames[issue["assignee"]["username"]]
-            )
-        jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
+            # There is something wrong if we find more than one issue
+            # for the ticket
+            if len(jira_issues) > 1:
+                log.error(
+                    "We found more than one issue for url '{}': {}".format(
+                        issue["full_url"],
+                        [issue.key for issue in jira_issues]
+                    ))
+
+            if not jira_issues:
+                log.debug(
+                    "Creating jira ticket from '{}'".format(issue["full_url"])
+                )
+                jira_issue = jira.create_issue(
+                    issue["title"],
+                    issue["content"],
+                    issue["full_url"],
+                    issue["project"],
+                )
+            else:
+                jira_issue = jira_issues[0]
+
+            if (
+                    issue["assignee"] and
+                    issue["assignee"]["name"] in pagure_usernames
+            ):
+                jira.assign_to_issue(
+                    jira_issue,
+                    pagure_usernames[issue["assignee"]["name"]]
+                )
+            jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.INFO)
+    if DEBUG:
+        log.setLevel(logging.DEBUG)
+
     cli.add_command(sync_tickets)
     cli()
