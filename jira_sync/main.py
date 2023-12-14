@@ -57,9 +57,15 @@ def sync_tickets(days_ago: int, config: str):
 
         # Retrieve issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
-            repo_issues = pagure.get_open_project_issues(repository["repo"])
+            repo_issues = pagure.get_open_project_issues(
+                repository["repo"], repository["label"]
+            )
             repo_issues.extend(
-                pagure.get_closed_project_issues(repository["repo"], days_ago)
+                pagure.get_closed_project_issues(
+                    repository["repo"],
+                    days_ago,
+                    repository["label"]
+                )
             )
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:

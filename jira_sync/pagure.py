@@ -29,13 +29,16 @@ class Pagure:
             url = url[:-1]
         self.instance_url = url
 
-    def get_closed_project_issues(self, repo: str, days_ago: int) -> List:
+    def get_closed_project_issues(
+            self, repo: str, days_ago: int, label: str = ""
+    ) -> List:
         """
         Retrieve closed issues on project that were closed in `days_ago`.
 
         Params:
           repo: Repository path. For example 'namespace/repo'
           days_ago: Number of days to look in past for closed issues
+          label: Label to filter issues by
 
         Returns:
           List of issues represented by dictionaries.
@@ -45,6 +48,8 @@ class Pagure:
             self.instance_url + "/api/0/" + repo +
             "/issues?status=Closed&since=" + str(since_arg.int_timestamp)
         )
+        if label:
+            next_page = next_page + "&tags=" + label
 
         issues = []
 
@@ -63,17 +68,21 @@ class Pagure:
 
         return issues
 
-    def get_open_project_issues(self, repo: str) -> List:
+    def get_open_project_issues(self, repo: str, label: str = "") -> List:
         """
         Retrieve all open project issues on project.
 
         Params:
           repo: Repository path. For example 'namespace/repo'
+          label: Label to filter issues by
 
         Returns:
           List of issues represented by dictionaries.
         """
         next_page = self.instance_url + "/api/0/" + repo + "/issues"
+
+        if label:
+            next_page = next_page + "?tags=" + label
 
         issues = []
 
