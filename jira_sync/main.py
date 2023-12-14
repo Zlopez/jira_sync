@@ -9,7 +9,7 @@ import tomllib
 from jira_sync.pagure import Pagure
 from jira_sync.jira_wrapper import JIRA
 
-DEBUG = True
+DEBUG = False
 
 
 @click.group()
@@ -63,7 +63,6 @@ def sync_tickets(days_ago: int, config: str):
             )
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:
-                log.debug("Processing issue: {}".format(issue["full_url"]))
                 issue["project"] = repository["repo"]
                 if not issue["assignee"]:
                     issue["ticket_state"] = "new"
@@ -78,24 +77,15 @@ def sync_tickets(days_ago: int, config: str):
             )
 
         for issue in pagure_issues:
-            # The method returns list, but there should be only one issue
-            # per pagure ticket
-            jira_issues = jira.get_issue_by_link(
+            log.debug("Processing issue: {}".format(issue["full_url"]))
+            # Find the corresponding issue in JIRA
+            jira_issue = jira.get_issue_by_link(
                 issue["full_url"],
                 issue["project"],
                 issue["title"]
             )
 
-            # There is something wrong if we find more than one issue
-            # for the ticket
-            if len(jira_issues) > 1:
-                log.error(
-                    "We found more than one issue for url '{}': {}".format(
-                        issue["full_url"],
-                        [issue.key for issue in jira_issues]
-                    ))
-
-            if not jira_issues:
+            if not jira_issue:
                 log.debug(
                     "Creating jira ticket from '{}'".format(issue["full_url"])
                 )
@@ -105,8 +95,6 @@ def sync_tickets(days_ago: int, config: str):
                     issue["full_url"],
                     issue["project"],
                 )
-            else:
-                jira_issue = jira_issues[0]
 
             if (
                     issue["assignee"] and
@@ -116,15 +104,18 @@ def sync_tickets(days_ago: int, config: str):
                     jira_issue,
                     pagure_usernames[issue["assignee"]["name"]]
                 )
+            else:
+                jira.assign_to_issue(jira_issue, None)
             jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
+            jira.add_label(jira_issue, config_dict["General"]["jira_label"])
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
     if DEBUG:
-        log.setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger(__name__)
 
     cli.add_command(sync_tickets)
     cli()

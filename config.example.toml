@@ -6,6 +6,7 @@ jira_instance = "https://jira.attlasian.com"  # JIRA instance URL
 jira_project = "Project"  # Name of the project to sync tickets to
 jira_token = "token"  # API token to use for authentication
 jira_default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
+jira_label = "label"  # Label used for all issues created by this script
 
 # Map the ticket state to JIRA project state
 # Recognizable states are:
