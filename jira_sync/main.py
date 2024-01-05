@@ -144,6 +144,7 @@ def sync_tickets(config: str):
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
 
         # Close the JIRA issues that are not open anymore on source
+        log.info("Closing '{}' JIRA issues".format(len(jira_issues_to_close)))
         for jira_issue in jira_issues_to_close:
             jira.transition_issue(jira_issue, state_map["closed"])
 
