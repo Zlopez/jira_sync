@@ -20,11 +20,6 @@ def cli():
 
 @click.command()
 @click.option(
-    "--days-ago",
-    default=1,
-    help="How many days ago to look for closed issues."
-)
-@click.option(
     "--config",
     default="config.toml",
     help="Path to configuration file."
