@@ -70,9 +70,7 @@ def sync_tickets(days_ago: int, config: str):
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:
                 issue["project"] = repository["repo"]
-                if not issue["assignee"]:
-                    issue["ticket_state"] = "new"
-                else:
+                if issue["assignee"]:
                     issue["ticket_state"] = "assigned"
                 if "blocked" in issue["tags"]:
                     issue["ticket_state"] = "blocked"
@@ -112,7 +110,11 @@ def sync_tickets(days_ago: int, config: str):
                 )
             else:
                 jira.assign_to_issue(jira_issue, None)
-            jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
+            # Don't move the issue if the ticket_state value is not filled
+            # This will prevent to move ticket back
+            # to new state when not needed
+            if "ticket_state" in issue:
+                jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
 
 
