@@ -29,45 +29,6 @@ class Pagure:
             url = url[:-1]
         self.instance_url = url
 
-    def get_closed_project_issues(
-            self, repo: str, days_ago: int, label: str = ""
-    ) -> List:
-        """
-        Retrieve closed issues on project that were closed in `days_ago`.
-
-        Params:
-          repo: Repository path. For example 'namespace/repo'
-          days_ago: Number of days to look in past for closed issues
-          label: Label to filter issues by
-
-        Returns:
-          List of issues represented by dictionaries.
-        """
-        since_arg = arrow.utcnow().shift(days=-days_ago)
-        next_page = (
-            self.instance_url + "/api/0/" + repo +
-            "/issues?status=Closed&since=" + str(since_arg.int_timestamp)
-        )
-        if label:
-            next_page = next_page + "&tags=" + label
-
-        issues = []
-
-        while next_page:
-            page_data = self._get_json(next_page)
-            if page_data:
-                issues.extend(page_data["issues"])
-                next_page = page_data["pagination"]["next"]
-
-        log.info(
-            "Retrieved {} closed issues from {}".format(
-                len(issues),
-                repo
-            )
-        )
-
-        return issues
-
     def get_open_project_issues(self, repo: str, label: str = "") -> List:
         """
         Retrieve all open project issues on project.

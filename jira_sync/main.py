@@ -2,6 +2,7 @@
 Script for synchronizing tickets from various trackers in JIRA project.
 """
 import logging
+import re
 
 import click
 import tomllib
@@ -28,12 +29,11 @@ def cli():
     default="config.toml",
     help="Path to configuration file."
 )
-def sync_tickets(days_ago: int, config: str):
+def sync_tickets(config: str):
     """
     Sync the ticket from sources provided in configuration file.
 
     Params:
-      days_ago: How many days ago to look for closed issues.
       config: Path to configuration file.
     """
     with open(config, "rb") as config_file:
@@ -49,6 +49,8 @@ def sync_tickets(days_ago: int, config: str):
     pagure_enabled = config_dict["Pagure"]["enabled"]
     state_map = config_dict["General"]["states"]
 
+    jira_issues_to_close = []
+
     # Pagure is enabled in configuration
     if pagure_enabled:
         pagure_usernames = config_dict["Pagure"]["usernames"]
@@ -57,18 +59,38 @@ def sync_tickets(days_ago: int, config: str):
 
         # Retrieve issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
+            log.info("Processing repository: {}".format(repository["repo"]))
             repo_issues = pagure.get_open_project_issues(
                 repository["repo"], repository["label"]
             )
-            repo_issues.extend(
-                pagure.get_closed_project_issues(
-                    repository["repo"],
-                    days_ago,
-                    repository["label"]
+            jira_issues = jira.get_open_issues_by_label(repository["repo"])
+            log.info(
+                "Retrieved {} from jira for '{}' repository".format(
+                    len(jira_issues), repository["repo"]
                 )
             )
+            # This will be filled with JIRA issues that were matched with
+            # pagure obtained issues
+            jira_issues_matched = []
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:
+                # Look if the issue exists in JIRA already
+                for jira_issue in jira_issues:
+                    if re.match(
+                            "^" + issue["full_url"] + "$",
+                            jira_issue.fields.description.split("\n")[0]
+                    ):
+                        # We found the issue, let's remember it
+                        issue["jira_issue"] = jira_issue
+                        jira_issues_matched.append(jira_issue)
+
+                # Let's filter the issues that should be closed
+                jira_issues_to_close.extend(
+                    [
+                        jira_issue for jira_issue in jira_issues
+                        if jira_issue not in jira_issues_matched
+                    ]
+                )
                 issue["project"] = repository["repo"]
                 if issue["assignee"]:
                     issue["ticket_state"] = "assigned"
@@ -82,12 +104,16 @@ def sync_tickets(days_ago: int, config: str):
 
         for issue in pagure_issues:
             log.debug("Processing issue: {}".format(issue["full_url"]))
-            # Find the corresponding issue in JIRA
-            jira_issue = jira.get_issue_by_link(
-                issue["full_url"],
-                issue["project"],
-                issue["title"]
-            )
+            jira_issue = None
+            if "jira_issue" in issue:
+                jira_issue = issue["jira_issue"]
+            else:
+                # Find the corresponding issue in JIRA
+                jira_issue = jira.get_issue_by_link(
+                    issue["full_url"],
+                    issue["project"],
+                    issue["title"]
+                )
 
             if not jira_issue:
                 log.debug(
@@ -116,6 +142,10 @@ def sync_tickets(days_ago: int, config: str):
             if "ticket_state" in issue:
                 jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
+
+        # Close the JIRA issues that are not open anymore on source
+        for jira_issue in jira_issues_to_close:
+            jira.transition_issue(jira_issue, state_map["closed"])
 
 
 if __name__ == "__main__":

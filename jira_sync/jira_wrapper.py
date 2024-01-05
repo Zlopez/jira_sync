@@ -5,7 +5,7 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
 import logging
 import re
-from typing import cast, Dict, Optional
+from typing import cast, Dict, List, Optional
 
 import jira
 
@@ -89,6 +89,30 @@ class JIRA:
                     return issue
 
         return issues[0]
+
+    def get_open_issues_by_label(
+            self,
+            label: str
+    ) -> List[jira.resources.Issue]:
+        """
+        Retrieve open issues for the specified label.
+
+        Params:
+          label: Label to retrieve the issues by.
+
+        Returns:
+          List of issues.
+        """
+        issues = cast(
+            jira.client.ResultList[jira.resources.Issue],
+            self.jira.search_issues(
+                (
+                    'project = ' + self.project +
+                    ' AND labels = ' + label + ' AND status in (Open)'
+                )
+            )
+        )
+        return issues
 
     def create_issue(
             self,
