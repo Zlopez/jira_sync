@@ -10,20 +10,34 @@ import tomllib
 from jira_sync.pagure import Pagure
 from jira_sync.jira_wrapper import JIRA
 
+log = logging.getLogger(__name__)
+
 
 @click.group()
-def cli():
-    pass
+@click.option(
+    "-v", "--verbose",
+    is_flag=True,
+    help="Will print verbose messages."
+)
+def cli(verbose: bool):
+    """
+    Click main function.
+    """
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    log.addHandler(ch)
+    log.setLevel(logging.INFO)
+    if verbose:
+        log.setLevel(logging.DEBUG)
 
 
-@click.command()
+@cli.command()
 @click.option(
     "--config",
     default="config.toml",
     help="Path to configuration file."
 )
-@click.option('--verbose', is_flag=True, help="Will print verbose messages.")
-def sync_tickets(config: str, verbose: bool):
+def sync_tickets(config: str):
     """
     Sync the ticket from sources provided in configuration file.
 
@@ -31,8 +45,6 @@ def sync_tickets(config: str, verbose: bool):
       config: Path to configuration file.
       verbose: Verbose flag
     """
-    if verbose:
-        logging.basicConfig(level=logging.DEBUG)
     with open(config, "rb") as config_file:
         config_dict = tomllib.load(config_file)
 
@@ -83,12 +95,12 @@ def sync_tickets(config: str, verbose: bool):
 
                 # Let's filter the issues that should be closed
                 issue["project"] = repository["repo"]
-                if issue["assignee"]:
+                if not issue["assignee"]:
+                    issue["ticket_state"] = "new"
+                else:
                     issue["ticket_state"] = "assigned"
                 if "blocked" in issue["tags"]:
                     issue["ticket_state"] = "blocked"
-                if issue["closed_at"]:
-                    issue["ticket_state"] = "closed"
             pagure_issues.extend(
                 repo_issues
             )
@@ -107,8 +119,13 @@ def sync_tickets(config: str, verbose: bool):
         for issue in pagure_issues:
             log.debug("Processing issue: {}".format(issue["full_url"]))
             jira_issue = None
-            if "jira_issue" in issue:
+            if "jira_issue" in issue and issue["jira_issue"]:
                 jira_issue = issue["jira_issue"]
+                log.debug(
+                    "Issue {} matched with {}".format(
+                        issue["full_url"], jira_issue.key
+                    )
+                )
             else:
                 # Find the corresponding issue in JIRA
                 jira_issue = jira.get_issue_by_link(
@@ -138,10 +155,16 @@ def sync_tickets(config: str, verbose: bool):
                 )
             else:
                 jira.assign_to_issue(jira_issue, None)
-            # Don't move the issue if the ticket_state value is not filled
-            # This will prevent to move ticket back
-            # to new state when not needed
-            if "ticket_state" in issue:
+            # Don't move ticket from states we don't know
+            log.debug("Transition issue {} from {} to {}".format(
+                jira_issue.key,
+                jira_issue.fields.status.name,
+                state_map[issue["ticket_state"]])
+            )
+            # Only move to new state from status we know
+            if not (issue["ticket_state"] == "new" and
+                    jira.fields.status.name not in state_map.values()
+                    ):
                 jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
 
@@ -152,8 +175,4 @@ def sync_tickets(config: str, verbose: bool):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger(__name__)
-
-    cli.add_command(sync_tickets)
     cli()

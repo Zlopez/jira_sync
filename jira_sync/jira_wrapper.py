@@ -79,14 +79,14 @@ class JIRA:
         if not issues:
             return None
 
-        if len(issues) > 1:
-            for issue in issues:
-                if re.match(
-                        r"^" + url + "$",
-                        issue.fields.description.split("\n")[0]
-                ):
-                    # Found the exact issue, let's return it
-                    return issue
+        # Only the exact match is correct
+        for issue in issues:
+            if re.match(
+                    r"^" + url + "$",
+                    issue.fields.description.split("\n")[0]
+            ):
+                # Found the exact issue, let's return it
+                return issue
 
         return issues[0]
 
