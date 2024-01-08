@@ -108,8 +108,10 @@ class JIRA:
             self.jira.search_issues(
                 (
                     'project = ' + self.project +
-                    ' AND labels = ' + label + ' AND status in (Open)'
-                )
+                    ' AND labels = ' + label +
+                    ' AND status not in (Done, Closed)',
+                ),
+                maxResults=0
             )
         )
         return issues
