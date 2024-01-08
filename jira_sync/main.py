@@ -163,7 +163,7 @@ def sync_tickets(config: str):
             )
             # Only move to new state from status we know
             if not (issue["ticket_state"] == "new" and
-                    jira.fields.status.name not in state_map.values()
+                    jira_issue.fields.status.name not in state_map.values()
                     ):
                 jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
