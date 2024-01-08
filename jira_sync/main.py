@@ -10,8 +10,6 @@ import tomllib
 from jira_sync.pagure import Pagure
 from jira_sync.jira_wrapper import JIRA
 
-DEBUG = False
-
 
 @click.group()
 def cli():
@@ -24,13 +22,17 @@ def cli():
     default="config.toml",
     help="Path to configuration file."
 )
-def sync_tickets(config: str):
+@click.option('--verbose', is_flag=True, help="Will print verbose messages.")
+def sync_tickets(config: str, verbose: bool):
     """
     Sync the ticket from sources provided in configuration file.
 
     Params:
       config: Path to configuration file.
+      verbose: Verbose flag
     """
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
     with open(config, "rb") as config_file:
         config_dict = tomllib.load(config_file)
 
@@ -60,7 +62,7 @@ def sync_tickets(config: str):
             )
             jira_issues = jira.get_open_issues_by_label(repository["repo"])
             log.info(
-                "Retrieved {} from jira for '{}' repository".format(
+                "Retrieved {} issues from jira for '{}' repository".format(
                     len(jira_issues), repository["repo"]
                 )
             )
@@ -80,12 +82,6 @@ def sync_tickets(config: str):
                         jira_issues_matched.append(jira_issue)
 
                 # Let's filter the issues that should be closed
-                jira_issues_to_close.extend(
-                    [
-                        jira_issue for jira_issue in jira_issues
-                        if jira_issue not in jira_issues_matched
-                    ]
-                )
                 issue["project"] = repository["repo"]
                 if issue["assignee"]:
                     issue["ticket_state"] = "assigned"
@@ -95,6 +91,17 @@ def sync_tickets(config: str):
                     issue["ticket_state"] = "closed"
             pagure_issues.extend(
                 repo_issues
+            )
+            log.info(
+                "{} pagure issues matched jira issues".format(
+                    len(jira_issues_matched)
+                )
+            )
+            jira_issues_to_close.extend(
+                [
+                    jira_issue for jira_issue in jira_issues
+                    if jira_issue not in jira_issues_matched
+                ]
             )
 
         for issue in pagure_issues:
@@ -145,10 +152,7 @@ def sync_tickets(config: str):
 
 
 if __name__ == "__main__":
-    if DEBUG:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(__name__)
 
     cli.add_command(sync_tickets)
