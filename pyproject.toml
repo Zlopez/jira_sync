@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "jira_sync"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 jira = "^3.5.2"
 click = "^8.1.7"
 toml = "^0.10.2"
