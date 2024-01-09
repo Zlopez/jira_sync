@@ -15,7 +15,7 @@ jobs:
         JIRA_TOKEN: ${{ secrets.jira_token }}
       run: |
         cp .github/workflows/workflow_config.toml .
-        sed -i -e "s/\$secrets.jira_token/$JIRA_TOKEN/g" config.toml
+        sed -i -e "s|\$secrets.jira_token|$JIRA_TOKEN|g" config.toml
 
     - name: Run the script
       run: |
