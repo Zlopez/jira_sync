@@ -3,9 +3,9 @@ Script for synchronizing tickets from various trackers in JIRA project.
 """
 import logging
 import re
+import tomllib
 
 import click
-import tomllib
 
 from jira_sync.pagure import Pagure
 from jira_sync.jira_wrapper import JIRA
