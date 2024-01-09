@@ -1,0 +1,21 @@
+name: Sync trackers
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+
+jobs:
+  sync-trackers:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/setup-python@v5.0.0
+    - name: Prepare config
+      env:
+        JIRA_TOKEN: ${{ secrets.jira_token }}
+      run: |
+        cp .github/workflows/workflow_config.toml .
+        sed -i -e "s/\$secrets.jira_token/$JIRA_TOKEN/g" config.toml
+
+    - name: Run the script
+      run: |
+        poetry run python3 jira_sync/main.py sync-tickets
