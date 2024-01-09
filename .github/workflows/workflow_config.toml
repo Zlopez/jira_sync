@@ -1,0 +1,53 @@
+# General configuration
+[General]
+jira_instance = "https://issues.redhat.com"  # JIRA instance URL
+jira_project = "CPE"  # Name of the project to sync tickets to
+jira_token = $secrets.jira_token  # API token to use for authentication
+jira_default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
+jira_label = "infra-releng"  # Label used for all issues created by this script
+
+# Map the ticket state to JIRA project state
+# Recognizable states are:
+# * new = ticket is open and nobody is assigned to it
+# * assigned = ticket is assigned to user
+# * blocked = ticket is blocked (see blocked_label in corresponding section)
+# * closed = ticket is closed
+[General.states]
+new = "New"
+assigned = "In Progress"
+blocked = "Blocked"
+closed = "Done"
+
+
+# Pagure configuration
+[Pagure]
+enabled = true  # Enable/Disable Pagure backend
+pagure_url = "https://pagure.io/"  # URL for pagure endpoint
+blocked_label = "blocked"  # Label that is marking blocked issues
+# List of repositories to check for tickets
+# When label is set, only tickets with this label will be recovered
+repositories = [
+  { repo = "fedora-infrastructure", label = "" },
+  { repo = "releng", label = "" },
+  { repo = "centos-infra", label = "" }
+]
+
+# Map of pagure usernames to jira
+[Pagure.usernames]
+abompard = "abompard@redhat.com"
+akash = "akdhar@redhat.com"
+amedvede = ""
+arrfab = "farrotin"
+dhererra = "dhererra@redhat.com"
+dkirwan = "dkirwan"
+jantill = ""
+jnsamyak = ""
+jrichardson = ""
+kevin = "kfenzi.fedora"
+lsegura = ""
+nils = "rhn-engineering-nphilipp"
+pmoura = "pmoura@redhat.com"
+ppolakov = ""
+rlerch = ""
+thrcka = "thrcka@redhat.com"
+zlopez = "michalkonec"
