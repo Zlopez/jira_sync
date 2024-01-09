@@ -2,7 +2,7 @@
 [General]
 jira_instance = "https://issues.redhat.com"  # JIRA instance URL
 jira_project = "CPE"  # Name of the project to sync tickets to
-jira_token = $secrets.jira_token  # API token to use for authentication
+jira_token = "$secrets.jira_token"  # API token to use for authentication
 jira_default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 jira_label = "infra-releng"  # Label used for all issues created by this script
 
