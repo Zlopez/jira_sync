@@ -42,7 +42,7 @@ To add a new repository to synced ones just add line to repositories like this:
 { repo = "example", label = ""}
 ```
 
-If you set ``pagure_url` to https://pagure.io/ then this will make script to sync all open tickets from `https://pagure.io/example` project. If you want to sync only open tickets with specific label
+If you set `pagure_url` to https://pagure.io/ then this will make script to sync all open tickets from `https://pagure.io/example` project. If you want to sync only open tickets with specific label
 just set `label` to some value.
 
 ## How the sync works
