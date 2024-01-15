@@ -36,7 +36,7 @@ repositories = [
 [Pagure.usernames]
 abompard = "abompard@redhat.com"
 akash = "akdhar@redhat.com"
-amedvede = ""
+amedvede = "amedvede@redhat.com"
 arrfab = "farrotin"
 dhererra = "dhererra@redhat.com"
 dkirwan = "dkirwan"
