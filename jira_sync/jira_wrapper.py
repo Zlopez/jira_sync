@@ -71,7 +71,8 @@ class JIRA:
             self.jira.search_issues(
                 (
                     'project = ' + self.project +
-                    ' AND Description ~ \"' + url + '\" AND labels = ' + repo
+                    ' AND Description ~ \"' + url + '\" AND labels = \"' +
+                    repo + '\"'
                 )
             )
         )
@@ -108,7 +109,7 @@ class JIRA:
             self.jira.search_issues(
                 (
                     'project = ' + self.project +
-                    ' AND labels = ' + label +
+                    ' AND labels = \"' + label + '\"' +
                     ' AND status not in (Done, Closed)',
                 ),
                 maxResults=0
