@@ -29,7 +29,8 @@ blocked_label = "blocked"  # Label that is marking blocked issues
 repositories = [
   { repo = "fedora-infrastructure", label = "" },
   { repo = "releng", label = "" },
-  { repo = "centos-infra", label = "" }
+  { repo = "centos-infra", label = "" },
+  { repo = "fedora-infra/toddlers", label = "cpe" }
 ]
 
 # Map of pagure usernames to jira
