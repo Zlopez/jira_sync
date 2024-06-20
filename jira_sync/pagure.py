@@ -6,7 +6,6 @@ See https://pagure.io/api/0
 import logging
 from typing import List
 
-import arrow
 import requests
 
 log = logging.getLogger(__name__)
