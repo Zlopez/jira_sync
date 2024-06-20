@@ -4,7 +4,6 @@ Module for communicating with pagure API.
 See https://pagure.io/api/0
 """
 import logging
-from typing import List
 
 import requests
 
@@ -14,7 +13,7 @@ log = logging.getLogger(__name__)
 class Pagure:
     """Wrapper class around pagure API calls."""
 
-    instance_url: str = ""
+    instance_url: str
 
     def __init__(self, url: str):
         """
@@ -23,12 +22,10 @@ class Pagure:
         Params:
           url: Pagure server URL
         """
-        # Remove trailing /
-        if url.endswith("/"):
-            url = url[:-1]
+        url = url.rstrip("/")
         self.instance_url = url
 
-    def get_open_project_issues(self, repo: str, label: str = "") -> List:
+    def get_open_project_issues(self, repo: str, label: str = "") -> list[dict]:
         """
         Retrieve all open project issues on project.
 

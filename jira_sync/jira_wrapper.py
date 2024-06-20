@@ -5,7 +5,7 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
 import logging
 import re
-from typing import cast, Dict, List, Optional
+from typing import cast
 
 import jira
 
@@ -27,7 +27,7 @@ class JIRA:
     jira: jira.client.JIRA
     project: str
     issue_type: str
-    project_states: Dict[str, str] = {}
+    project_states: dict[str, str]
 
     def __init__(
             self,
@@ -48,10 +48,11 @@ class JIRA:
         self.jira = jira.client.JIRA(url, token_auth=token)
         self.project = project
         self.issue_type = issue_type
+        self.project_states = {}
 
     def get_issue_by_link(
             self, url: str, repo: str, title: str
-    ) -> Optional[jira.resources.Issue]:
+    ) -> jira.resources.Issue | None:
         """
         Return issue that has external issue URL set to url.
 
@@ -94,7 +95,7 @@ class JIRA:
     def get_open_issues_by_label(
             self,
             label: str
-    ) -> List[jira.resources.Issue]:
+    ) -> list[jira.resources.Issue]:
         """
         Retrieve open issues for the specified label.
 
@@ -123,7 +124,7 @@ class JIRA:
             description: str,
             url: str,
             label: str = ""
-    ) -> Optional[jira.resources.Issue]:
+    ) -> jira.resources.Issue | None:
         """
         Create new issue in JIRA.
 
