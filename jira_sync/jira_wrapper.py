@@ -108,11 +108,9 @@ class JIRA:
         issues = cast(
             jira.client.ResultList[jira.resources.Issue],
             self.jira.search_issues(
-                (
-                    'project = ' + self.project +
-                    ' AND labels = \"' + label + '\"' +
-                    ' AND status not in (Done, Closed)',
-                ),
+                'project = ' + self.project +
+                ' AND labels = \"' + label + '\"' +
+                ' AND status not in (Done, Closed)',
                 maxResults=0
             )
         )
@@ -144,12 +142,10 @@ class JIRA:
             "issuetype": {"name": self.issue_type},
             "labels": [label] if label else [],
         }
-        issue = self.jira.create_issue(fields=issue_dict)
-
-        if issue:
-            return issue
-
-        return None
+        try:
+            return self.jira.create_issue(fields=issue_dict)
+        except jira.exceptions.JIRAError:
+            return None
 
     def transition_issue(
             self, issue: jira.resources.Issue, state: str
