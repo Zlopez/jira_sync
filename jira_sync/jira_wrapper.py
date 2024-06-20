@@ -27,7 +27,7 @@ class JIRA:
     jira: jira.client.JIRA
     project: str
     issue_type: str
-    project_states: dict[str, str]
+    project_states: dict[jira.resources.Issue, dict[str, str]]
 
     def __init__(
             self,
@@ -147,6 +147,20 @@ class JIRA:
         except jira.exceptions.JIRAError:
             return None
 
+    def _get_issue_transition_states(self, issue: jira.resources.Issue) -> dict[str, str]:
+        """
+        Retrieve and cache possible ticket transition states.
+
+        Params:
+          issue: Issue object
+        Returns: A dictionary mapping state names to ids
+        """
+        if issue not in self.project_states:
+            self.project_states[issue] = {
+                transition["name"]: transition["id"] for transition in self.jira.transitions(issue)
+            }
+        return self.project_states[issue]
+
     def transition_issue(
             self, issue: jira.resources.Issue, state: str
     ) -> None:
@@ -157,22 +171,16 @@ class JIRA:
           issue: Issue object
           state: New state to move to
         """
-        ticket_state = state
-        if not self.project_states:
-            transitions = self.jira.transitions(issue)
-            for transition in transitions:
-                self.project_states[transition["name"]] = transition["id"]
-
-        if issue.fields.status.name != ticket_state:
+        if issue.fields.status.name != state:
             log.debug(
                 "Changing status to '{}' in ticket {}".format(
-                    ticket_state,
+                    state,
                     issue.key
                 )
             )
             self.jira.transition_issue(
                 issue,
-                self.project_states[ticket_state]
+                self._get_issue_transition_states(issue)[state]
             )
 
     def assign_to_issue(self, issue: jira.resources.Issue, user: str) -> None:
@@ -183,17 +191,7 @@ class JIRA:
           issue: Issue object
           user: Username to assign to ticket
         """
-        # If there is no assigned user in JIRA, but there should be
-        if user and not issue.fields.assignee:
-            log.debug(
-                "Assigning user {} to {}".format(
-                    user,
-                    issue.key
-                )
-            )
-            self.jira.assign_issue(issue.id, user)
-        # If user is different then the assigned user
-        elif issue.fields.assignee and user != issue.fields.assignee.name:
+        if user != getattr(issue.fields.assignee, "name", None):
             log.debug(
                 "Assigning user {} to {}".format(
                     user,
