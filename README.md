@@ -13,7 +13,7 @@ Supports https://pagure.io/ with another sources planned.
 
 1. Rename `config.example.toml` to `config.toml`
 2. Fill `config.toml` with correct values (See [Configuration section](#configuration))
-3. Run the script with `poetry run python jira_sync/main.py sync-tickets`
+3. Run the script with `poetry run jira_sync sync-tickets`
 
 ## Configuration
 

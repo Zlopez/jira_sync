@@ -7,8 +7,8 @@ import tomllib
 
 import click
 
-from jira_sync.pagure import Pagure
-from jira_sync.jira_wrapper import JIRA
+from .pagure import Pagure
+from .jira_wrapper import JIRA
 
 log = logging.getLogger(__name__)
 
@@ -172,7 +172,3 @@ def sync_tickets(config: str):
         log.info("Closing '{}' JIRA issues".format(len(jira_issues_to_close)))
         for jira_issue in jira_issues_to_close:
             jira.transition_issue(jira_issue, state_map["closed"])
-
-
-if __name__ == "__main__":
-    cli()

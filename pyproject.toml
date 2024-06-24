@@ -16,6 +16,9 @@ requests = "^2.31.0"
 poetry = "^1.8.3"
 pytest = "^8.2.2"
 
+[tool.poetry.scripts]
+jira_sync = "jira_sync.main:cli"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
