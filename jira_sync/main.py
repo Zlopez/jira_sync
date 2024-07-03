@@ -26,9 +26,10 @@ def cli(verbose: bool):
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     log.addHandler(ch)
-    log.setLevel(logging.INFO)
     if verbose:
         log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
 
 
 @cli.command()
@@ -49,10 +50,10 @@ def sync_tickets(config: str):
         config_dict = tomllib.load(config_file)
 
     jira = JIRA(
-        config_dict["General"]["jira_instance"],
-        config_dict["General"]["jira_token"],
-        config_dict["General"]["jira_project"],
-        config_dict["General"]["jira_default_issue_type"],
+        url=config_dict["General"]["jira_instance"],
+        token=config_dict["General"]["jira_token"],
+        project=config_dict["General"]["jira_project"],
+        issue_type=config_dict["General"]["jira_default_issue_type"],
     )
 
     pagure_enabled = config_dict["Pagure"]["enabled"]
@@ -72,11 +73,18 @@ def sync_tickets(config: str):
             repo_issues = pagure.get_open_project_issues(
                 repository["repo"], repository["label"]
             )
+            log.info(
+                "Retrieved %s issues from Pagure for '%s' repository: %s",
+                len(repo_issues),
+                repository["repo"],
+                ", ".join(str(issue["id"]) for issue in repo_issues),
+            )
             jira_issues = jira.get_open_issues_by_label(repository["repo"])
             log.info(
-                "Retrieved %s issues from jira for '%s' repository",
+                "Retrieved %s issues from jira for '%s' repository: %s",
                 len(jira_issues),
                 repository["repo"],
+                ", ".join(issue.key for issue in jira_issues),
             )
             # This will be filled with JIRA issues that were matched with
             # pagure obtained issues
@@ -95,12 +103,18 @@ def sync_tickets(config: str):
 
                 # Let's filter the issues that should be closed
                 issue["project"] = repository["repo"]
-                if not issue["assignee"]:
-                    issue["ticket_state"] = "new"
+
+                # FIXME: This is Pagure specific
+                if issue["status"].lower() != "closed":
+                    if not issue["assignee"]:
+                        issue["ticket_state"] = "new"
+                    else:
+                        issue["ticket_state"] = "assigned"
+                    if "blocked" in issue["tags"]:
+                        issue["ticket_state"] = "blocked"
                 else:
-                    issue["ticket_state"] = "assigned"
-                if "blocked" in issue["tags"]:
-                    issue["ticket_state"] = "blocked"
+                    issue["ticket_state"] = "closed"
+
             pagure_issues.extend(
                 repo_issues
             )
@@ -145,21 +159,39 @@ def sync_tickets(config: str):
                 )
             else:
                 jira.assign_to_issue(jira_issue, None)
-            # Don't move ticket from states we don't know
-            log.debug(
-                "Transition issue %s from %s to %s",
-                jira_issue.key,
-                jira_issue.fields.status.name,
-                state_map[issue["ticket_state"]],
-            )
-            # Only move to new state from status we know
-            if not (issue["ticket_state"] == "new" and
-                    jira_issue.fields.status.name not in state_map.values()
-                    ):
-                jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
-            jira.add_label(jira_issue, config_dict["General"]["jira_label"])
+
+            if jira_issue.fields.status.name == state_map[issue["ticket_state"]]:
+                log.debug(
+                    "Not transitioning issue %s with state %s",
+                    jira_issue.key,
+                    jira_issue.fields.status.name,
+                )
+                continue
+
+            if issue["ticket_state"] != "closed":
+                # Don't move ticket from states we don't know
+                log.debug(
+                    "Transition issue %s from %s to %s",
+                    jira_issue.key,
+                    jira_issue.fields.status.name,
+                    state_map[issue["ticket_state"]],
+                )
+                # Only move to new state from status we know
+                if not (
+                    issue["ticket_state"] == "new"
+                    and jira_issue.fields.status.name not in state_map.values()
+                ):
+                    jira.transition_issue(jira_issue, state_map[issue["ticket_state"]])
+                jira.add_label(jira_issue, config_dict["General"]["jira_label"])
+            else:
+                log.debug("Marking issue %s for closing", jira_issue.key)
+                jira_issues_to_close.append(jira_issue)
 
         # Close the JIRA issues that are not open anymore on source
-        log.info("Closing '%s' JIRA issues", len(jira_issues_to_close))
+        log.info(
+            "Closing %s JIRA issues: %s",
+            len(jira_issues_to_close),
+            ", ".join(issue.key for issue in jira_issues_to_close),
+        )
         for jira_issue in jira_issues_to_close:
             jira.transition_issue(jira_issue, state_map["closed"])
