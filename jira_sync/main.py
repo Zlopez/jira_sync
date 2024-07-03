@@ -68,15 +68,15 @@ def sync_tickets(config: str):
 
         # Retrieve issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
-            log.info("Processing repository: {}".format(repository["repo"]))
+            log.info("Processing repository: %s", repository["repo"])
             repo_issues = pagure.get_open_project_issues(
                 repository["repo"], repository["label"]
             )
             jira_issues = jira.get_open_issues_by_label(repository["repo"])
             log.info(
-                "Retrieved {} issues from jira for '{}' repository".format(
-                    len(jira_issues), repository["repo"]
-                )
+                "Retrieved %s issues from jira for '%s' repository",
+                len(jira_issues),
+                repository["repo"],
             )
             # This will be filled with JIRA issues that were matched with
             # pagure obtained issues
@@ -104,11 +104,7 @@ def sync_tickets(config: str):
             pagure_issues.extend(
                 repo_issues
             )
-            log.info(
-                "{} pagure issues matched jira issues".format(
-                    len(jira_issues_matched)
-                )
-            )
+            log.info("%s pagure issues matched jira issues", len(jira_issues_matched))
             jira_issues_to_close.extend(
                 [
                     jira_issue for jira_issue in jira_issues
@@ -117,15 +113,11 @@ def sync_tickets(config: str):
             )
 
         for issue in pagure_issues:
-            log.debug("Processing issue: {}".format(issue["full_url"]))
+            log.debug("Processing issue: %s", issue["full_url"])
             jira_issue = None
             if "jira_issue" in issue and issue["jira_issue"]:
                 jira_issue = issue["jira_issue"]
-                log.debug(
-                    "Issue {} matched with {}".format(
-                        issue["full_url"], jira_issue.key
-                    )
-                )
+                log.debug("Issue %s matched with %s", issue["full_url"], jira_issue.key)
             else:
                 # Find the corresponding issue in JIRA
                 jira_issue = jira.get_issue_by_link(
@@ -135,9 +127,7 @@ def sync_tickets(config: str):
                 )
 
             if not jira_issue:
-                log.debug(
-                    "Creating jira ticket from '{}'".format(issue["full_url"])
-                )
+                log.debug("Creating jira ticket from '%s'", issue["full_url"])
                 jira_issue = jira.create_issue(
                     issue["title"],
                     issue["content"],
@@ -156,10 +146,11 @@ def sync_tickets(config: str):
             else:
                 jira.assign_to_issue(jira_issue, None)
             # Don't move ticket from states we don't know
-            log.debug("Transition issue {} from {} to {}".format(
+            log.debug(
+                "Transition issue %s from %s to %s",
                 jira_issue.key,
                 jira_issue.fields.status.name,
-                state_map[issue["ticket_state"]])
+                state_map[issue["ticket_state"]],
             )
             # Only move to new state from status we know
             if not (issue["ticket_state"] == "new" and
@@ -169,6 +160,6 @@ def sync_tickets(config: str):
             jira.add_label(jira_issue, config_dict["General"]["jira_label"])
 
         # Close the JIRA issues that are not open anymore on source
-        log.info("Closing '{}' JIRA issues".format(len(jira_issues_to_close)))
+        log.info("Closing '%s' JIRA issues", len(jira_issues_to_close))
         for jira_issue in jira_issues_to_close:
             jira.transition_issue(jira_issue, state_map["closed"])
