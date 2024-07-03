@@ -172,12 +172,7 @@ class JIRA:
           state: New state to move to
         """
         if issue.fields.status.name != state:
-            log.debug(
-                "Changing status to '{}' in ticket {}".format(
-                    state,
-                    issue.key
-                )
-            )
+            log.debug("Changing status to '%s' in ticket %s", state, issue.key)
             self.jira.transition_issue(
                 issue,
                 self._get_issue_transition_states(issue)[state]
@@ -192,12 +187,7 @@ class JIRA:
           user: Username to assign to ticket
         """
         if user != getattr(issue.fields.assignee, "name", None):
-            log.debug(
-                "Assigning user {} to {}".format(
-                    user,
-                    issue.key
-                )
-            )
+            log.debug("Assigning user %s to %s", user, issue.key)
             self.jira.assign_issue(issue.id, user)
 
     def add_label(self, issue: jira.resources.Issue, label: str) -> None:
@@ -209,5 +199,5 @@ class JIRA:
           label: Label to add
         """
         if label not in issue.fields.labels:
-            log.debug("Adding label {} to {}".format(label, issue.key))
+            log.debug("Adding label %s to %s", label, issue.key)
             issue.add_field_value("labels", label)

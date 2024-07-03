@@ -49,12 +49,7 @@ class Pagure:
                 issues.extend(page_data["issues"])
                 next_page = page_data["pagination"]["next"]
 
-        log.info(
-            "Retrieved {} open issues from {}".format(
-                len(issues),
-                repo
-            )
-        )
+        log.info("Retrieved %s open issues from %s", len(issues), repo)
 
         return issues
 
