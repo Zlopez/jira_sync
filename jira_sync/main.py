@@ -3,7 +3,6 @@ Script for synchronizing tickets from various trackers in JIRA project.
 """
 
 import logging
-import re
 import tomllib
 
 import click
@@ -83,13 +82,14 @@ def sync_tickets(config: str):
             # Add project_name to use it later as JIRA label
             for issue in repo_issues:
                 # Look if the issue exists in JIRA already
-                for jira_issue in jira_issues:
-                    if re.match(
-                        "^" + issue["full_url"] + "$", jira_issue.fields.description.split("\n")[0]
+                for jira_candidate in jira_issues:
+                    if (
+                        jira_candidate.fields.description
+                        and issue["full_url"] == jira_candidate.fields.description.split("\n")[0]
                     ):
                         # We found the issue, let's remember it
-                        issue["jira_issue"] = jira_issue
-                        jira_issues_matched.append(jira_issue)
+                        issue["jira_issue"] = jira_candidate
+                        jira_issues_matched.append(jira_candidate)
 
                 # Let's filter the issues that should be closed
                 issue["project"] = repository["repo"]
