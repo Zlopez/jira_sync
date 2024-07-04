@@ -72,8 +72,8 @@ class TestJIRA:
 
         assert f"project = {jira_params['project']}" in snippets
         # FIXME: assert "summary ~ \"Foo\"" in snippets
-        assert f"Description ~ \"{ISSUE_URL}\"" in snippets
-        assert "labels = \"test\"" in snippets
+        assert f'Description ~ "{ISSUE_URL}"' in snippets
+        assert 'labels = "test"' in snippets
 
         if issues_found:
             if not inexact:
@@ -99,7 +99,7 @@ class TestJIRA:
         snippets = [sn.strip() for sn in jql_str.split("AND")]
 
         assert f"project = {jira_params['project']}" in snippets
-        assert "labels = \"label\"" in snippets
+        assert 'labels = "label"' in snippets
         assert "status not in (Done, Closed)" in snippets
 
     @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))

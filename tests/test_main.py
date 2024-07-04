@@ -50,13 +50,17 @@ TEST_PAGURE_ISSUES = [
         "tags": (),
         "full_url": f"https://pagure.io/{spec['repo']}/issue/{id_}",
         "status": "Open",
-    } | spec
+    }
+    | spec
     for id_, spec in enumerate(
         (
             {
                 "repo": "test2",
                 "content": "The thing tripped over the other thing.",
-                "tags": ("test", "blocked",),
+                "tags": (
+                    "test",
+                    "blocked",
+                ),
             },
             {
                 "repo": "test2",
@@ -66,7 +70,10 @@ TEST_PAGURE_ISSUES = [
             },
             {"repo": "namespace/test1", "tags": ("label",)},
             {"repo": "namespace/test1", "assignee": {"name": "zod"}},
-            {"repo": "space_the_final_frontier", "tags": ("catch_me_if_you_can"),},
+            {
+                "repo": "space_the_final_frontier",
+                "tags": ("catch_me_if_you_can"),
+            },
             {
                 "repo": "test2",
                 "tags": ("test",),
@@ -190,16 +197,18 @@ def test_sync_tickets(pagure_enabled, tmp_path, runner, caplog):
 
     general_config["jira_project"] = "CPE"
     pagure_config["repositories"] = [
-        {"repo": name, "label": repo["label"]}
-        for name, repo in TEST_REPOS.items()
+        {"repo": name, "label": repo["label"]} for name, repo in TEST_REPOS.items()
     ]
 
     with config_file.open("w") as fp:
         tomlkit.dump(config, fp)
 
-    with mock.patch("jira_sync.main.JIRA") as JIRA, mock.patch(
-        "jira_sync.main.Pagure"
-    ) as Pagure, mock.patch.object(main.log, "setLevel"), caplog.at_level("DEBUG"):
+    with (
+        mock.patch("jira_sync.main.JIRA") as JIRA,
+        mock.patch("jira_sync.main.Pagure") as Pagure,
+        mock.patch.object(main.log, "setLevel"),
+        caplog.at_level("DEBUG"),
+    ):
         JIRA.return_value = jira = mock.Mock()
         jira.get_open_issues_by_label.side_effect = mock.Mock(wraps=_jira__get_open_issues_by_label)
         jira.get_issue_by_link.side_effect = mock.Mock(wraps=_jira__get_issue_by_link)

@@ -3,6 +3,7 @@ Wrapper around the JIRA API.
 
 See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
+
 import logging
 import re
 from typing import cast
@@ -30,11 +31,11 @@ class JIRA:
     project_states: dict[jira.resources.Issue, dict[str, str]]
 
     def __init__(
-            self,
-            url: str,
-            token: str,
-            project: str,
-            issue_type: str,
+        self,
+        url: str,
+        token: str,
+        project: str,
+        issue_type: str,
     ):
         """
         Class constructor.
@@ -50,9 +51,7 @@ class JIRA:
         self.issue_type = issue_type
         self.project_states = {}
 
-    def get_issue_by_link(
-            self, url: str, repo: str, title: str
-    ) -> jira.resources.Issue | None:
+    def get_issue_by_link(self, url: str, repo: str, title: str) -> jira.resources.Issue | None:
         """
         Return issue that has external issue URL set to url.
 
@@ -71,11 +70,15 @@ class JIRA:
             jira.client.ResultList[jira.resources.Issue],
             self.jira.search_issues(
                 (
-                    'project = ' + self.project +
-                    ' AND Description ~ \"' + url + '\" AND labels = \"' +
-                    repo + '\"'
+                    "project = "
+                    + self.project
+                    + ' AND Description ~ "'
+                    + url
+                    + '" AND labels = "'
+                    + repo
+                    + '"'
                 )
-            )
+            ),
         )
 
         if not issues:
@@ -83,19 +86,13 @@ class JIRA:
 
         # Only the exact match is correct
         for issue in issues:
-            if re.match(
-                    r"^" + url + "$",
-                    issue.fields.description.split("\n")[0]
-            ):
+            if re.match(r"^" + url + "$", issue.fields.description.split("\n")[0]):
                 # Found the exact issue, let's return it
                 return issue
 
         return issues[0]
 
-    def get_open_issues_by_label(
-            self,
-            label: str
-    ) -> list[jira.resources.Issue]:
+    def get_open_issues_by_label(self, label: str) -> list[jira.resources.Issue]:
         """
         Retrieve open issues for the specified label.
 
@@ -108,20 +105,19 @@ class JIRA:
         issues = cast(
             jira.client.ResultList[jira.resources.Issue],
             self.jira.search_issues(
-                'project = ' + self.project +
-                ' AND labels = \"' + label + '\"' +
-                ' AND status not in (Done, Closed)',
-                maxResults=0
-            )
+                "project = "
+                + self.project
+                + ' AND labels = "'
+                + label
+                + '"'
+                + " AND status not in (Done, Closed)",
+                maxResults=0,
+            ),
         )
         return issues
 
     def create_issue(
-            self,
-            summary: str,
-            description: str,
-            url: str,
-            label: str = ""
+        self, summary: str, description: str, url: str, label: str = ""
     ) -> jira.resources.Issue | None:
         """
         Create new issue in JIRA.
@@ -161,9 +157,7 @@ class JIRA:
             }
         return self.project_states[issue]
 
-    def transition_issue(
-            self, issue: jira.resources.Issue, state: str
-    ) -> None:
+    def transition_issue(self, issue: jira.resources.Issue, state: str) -> None:
         """
         Transition ticket to a new state.
 
@@ -173,10 +167,7 @@ class JIRA:
         """
         if issue.fields.status.name != state:
             log.debug("Changing status to '%s' in ticket %s", state, issue.key)
-            self.jira.transition_issue(
-                issue,
-                self._get_issue_transition_states(issue)[state]
-            )
+            self.jira.transition_issue(issue, self._get_issue_transition_states(issue)[state])
 
     def assign_to_issue(self, issue: jira.resources.Issue, user: str) -> None:
         """

@@ -3,6 +3,7 @@ Module for communicating with pagure API.
 
 See https://pagure.io/api/0
 """
+
 import logging
 
 import requests
@@ -63,15 +64,14 @@ class Pagure:
         Returns:
           Dictionary representing the JSON data returned for requested url.
         """
-        request = requests.get(url)
+        # Pagure can be slow, rather wait than fail.
+        request = requests.get(url, timeout=None)  # noqa: S113
 
         if request.status_code == requests.codes.ok:
             return request.json()
         else:
             log.error(
-                "Error happened during retrieval of '%s'. Error_code: %i",
-                url,
-                request.status_code
+                "Error happened during retrieval of '%s'. Error_code: %i", url, request.status_code
             )
 
         return {}

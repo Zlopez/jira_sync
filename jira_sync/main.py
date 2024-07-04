@@ -1,24 +1,21 @@
 """
 Script for synchronizing tickets from various trackers in JIRA project.
 """
+
 import logging
 import re
 import tomllib
 
 import click
 
-from .pagure import Pagure
 from .jira_wrapper import JIRA
+from .pagure import Pagure
 
 log = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option(
-    "-v", "--verbose",
-    is_flag=True,
-    help="Will print verbose messages."
-)
+@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
 def cli(verbose: bool):
     """
     Click main function.
@@ -33,11 +30,7 @@ def cli(verbose: bool):
 
 
 @cli.command()
-@click.option(
-    "--config",
-    default="config.toml",
-    help="Path to configuration file."
-)
+@click.option("--config", default="config.toml", help="Path to configuration file.")
 def sync_tickets(config: str):
     """
     Sync the ticket from sources provided in configuration file.
@@ -70,9 +63,7 @@ def sync_tickets(config: str):
         # Retrieve issues on the project
         for repository in config_dict["Pagure"]["repositories"]:
             log.info("Processing repository: %s", repository["repo"])
-            repo_issues = pagure.get_open_project_issues(
-                repository["repo"], repository["label"]
-            )
+            repo_issues = pagure.get_open_project_issues(repository["repo"], repository["label"])
             log.info(
                 "Retrieved %s issues from Pagure for '%s' repository: %s",
                 len(repo_issues),
@@ -94,8 +85,7 @@ def sync_tickets(config: str):
                 # Look if the issue exists in JIRA already
                 for jira_issue in jira_issues:
                     if re.match(
-                            "^" + issue["full_url"] + "$",
-                            jira_issue.fields.description.split("\n")[0]
+                        "^" + issue["full_url"] + "$", jira_issue.fields.description.split("\n")[0]
                     ):
                         # We found the issue, let's remember it
                         issue["jira_issue"] = jira_issue
@@ -115,15 +105,10 @@ def sync_tickets(config: str):
                 else:
                     issue["ticket_state"] = "closed"
 
-            pagure_issues.extend(
-                repo_issues
-            )
+            pagure_issues.extend(repo_issues)
             log.info("%s pagure issues matched jira issues", len(jira_issues_matched))
             jira_issues_to_close.extend(
-                [
-                    jira_issue for jira_issue in jira_issues
-                    if jira_issue not in jira_issues_matched
-                ]
+                [jira_issue for jira_issue in jira_issues if jira_issue not in jira_issues_matched]
             )
 
         for issue in pagure_issues:
@@ -135,9 +120,7 @@ def sync_tickets(config: str):
             else:
                 # Find the corresponding issue in JIRA
                 jira_issue = jira.get_issue_by_link(
-                    issue["full_url"],
-                    issue["project"],
-                    issue["title"]
+                    issue["full_url"], issue["project"], issue["title"]
                 )
 
             if not jira_issue:
@@ -149,14 +132,8 @@ def sync_tickets(config: str):
                     issue["project"],
                 )
 
-            if (
-                    issue["assignee"] and
-                    issue["assignee"]["name"] in pagure_usernames
-            ):
-                jira.assign_to_issue(
-                    jira_issue,
-                    pagure_usernames[issue["assignee"]["name"]]
-                )
+            if issue["assignee"] and issue["assignee"]["name"] in pagure_usernames:
+                jira.assign_to_issue(jira_issue, pagure_usernames[issue["assignee"]["name"]])
             else:
                 jira.assign_to_issue(jira_issue, None)
 

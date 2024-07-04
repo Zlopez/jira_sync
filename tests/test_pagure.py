@@ -72,7 +72,7 @@ class TestPagure:
 
             retval = obj._get_json(pagure_url)
 
-        requests.get.assert_called_once_with(pagure_url)
+        requests.get.assert_called_once_with(pagure_url, timeout=None)
         if success:
             assert retval == json_sentinel
             request.json.assert_called_once_with()
