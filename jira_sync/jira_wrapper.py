@@ -5,10 +5,12 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
 
 import logging
-import re
 from typing import cast
 
 import jira
+
+# Help out mypy, it trips over directly using jira.resources.Issue.
+from jira import Issue
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class JIRA:
     jira: jira.client.JIRA
     project: str
     issue_type: str
-    project_states: dict[jira.resources.Issue, dict[str, str]]
+    project_states: dict[Issue, dict[str, str]]
 
     def __init__(
         self,
@@ -51,7 +53,7 @@ class JIRA:
         self.issue_type = issue_type
         self.project_states = {}
 
-    def get_issue_by_link(self, url: str, repo: str, title: str) -> jira.resources.Issue | None:
+    def get_issue_by_link(self, url: str, repo: str, title: str) -> Issue | None:
         """
         Return issue that has external issue URL set to url.
 
@@ -67,7 +69,7 @@ class JIRA:
         title = title.replace("[", "\\\\[")
         title = title.replace("]", "\\\\]")
         issues = cast(
-            jira.client.ResultList[jira.resources.Issue],
+            jira.client.ResultList[Issue],
             self.jira.search_issues(
                 (
                     "project = "
@@ -86,13 +88,13 @@ class JIRA:
 
         # Only the exact match is correct
         for issue in issues:
-            if re.match(r"^" + url + "$", issue.fields.description.split("\n")[0]):
+            if issue.fields.description and url == issue.fields.description.split("\n")[0]:
                 # Found the exact issue, let's return it
                 return issue
 
         return issues[0]
 
-    def get_open_issues_by_label(self, label: str) -> list[jira.resources.Issue]:
+    def get_open_issues_by_label(self, label: str) -> list[Issue]:
         """
         Retrieve open issues for the specified label.
 
@@ -103,7 +105,7 @@ class JIRA:
           List of issues.
         """
         issues = cast(
-            jira.client.ResultList[jira.resources.Issue],
+            jira.client.ResultList[Issue],
             self.jira.search_issues(
                 "project = "
                 + self.project
@@ -118,7 +120,7 @@ class JIRA:
 
     def create_issue(
         self, summary: str, description: str, url: str, label: str = ""
-    ) -> jira.resources.Issue | None:
+    ) -> Issue | None:
         """
         Create new issue in JIRA.
 
@@ -143,7 +145,7 @@ class JIRA:
         except jira.exceptions.JIRAError:
             return None
 
-    def _get_issue_transition_states(self, issue: jira.resources.Issue) -> dict[str, str]:
+    def _get_issue_transition_states(self, issue: Issue) -> dict[str, str]:
         """
         Retrieve and cache possible ticket transition states.
 
@@ -157,7 +159,7 @@ class JIRA:
             }
         return self.project_states[issue]
 
-    def transition_issue(self, issue: jira.resources.Issue, state: str) -> None:
+    def transition_issue(self, issue: Issue, state: str) -> None:
         """
         Transition ticket to a new state.
 
@@ -169,7 +171,7 @@ class JIRA:
             log.debug("Changing status to '%s' in ticket %s", state, issue.key)
             self.jira.transition_issue(issue, self._get_issue_transition_states(issue)[state])
 
-    def assign_to_issue(self, issue: jira.resources.Issue, user: str) -> None:
+    def assign_to_issue(self, issue: Issue, user: str | None) -> None:
         """
         Assign user to ticket.
 
@@ -181,7 +183,7 @@ class JIRA:
             log.debug("Assigning user %s to %s", user, issue.key)
             self.jira.assign_issue(issue.id, user)
 
-    def add_label(self, issue: jira.resources.Issue, label: str) -> None:
+    def add_label(self, issue: Issue, label: str) -> None:
         """
         Add label to ticket.
 
