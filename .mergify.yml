@@ -1,0 +1,21 @@
+pull_request_rules:
+  - name: renovate
+    actions:
+      queue:
+        method: rebase
+        name: default
+    conditions:
+    - author=renovate[bot]
+    - label!=no-mergify
+    - "#changes-requested-reviews-by=0"
+    - check-success="CI"
+
+  - name: default
+    actions:
+      queue:
+        method: rebase
+        name: default
+    conditions:
+    - label!=no-mergify
+    - '#approved-reviews-by>=1'
+    - check-success="CI"
