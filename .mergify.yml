@@ -8,7 +8,10 @@ pull_request_rules:
     - author=renovate[bot]
     - label!=no-mergify
     - "#changes-requested-reviews-by=0"
-    - check-success="CI"
+    - check-success="CI / ci-smoketests (pull_request)"
+    - check-success="CI / ci-typing (pull_request)"
+    - check-success="CI / ci-testsuite (311) (pull_request)"
+    - check-success="CI / ci-testsuite (312) (pull_request)"
 
   - name: default
     actions:
@@ -18,4 +21,7 @@ pull_request_rules:
     conditions:
     - label!=no-mergify
     - '#approved-reviews-by>=1'
-    - check-success="CI"
+    - check-success="CI / ci-smoketests (pull_request)"
+    - check-success="CI / ci-typing (pull_request)"
+    - check-success="CI / ci-testsuite (311) (pull_request)"
+    - check-success="CI / ci-testsuite (312) (pull_request)"
