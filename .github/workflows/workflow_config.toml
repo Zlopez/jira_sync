@@ -1,10 +1,11 @@
 # General configuration
-[General]
-jira_instance = "https://issues.redhat.com"  # JIRA instance URL
-jira_project = "CPE"  # Name of the project to sync tickets to
-jira_token = "$secrets.jira_token"  # API token to use for authentication
-jira_default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
-jira_label = "infra-releng"  # Label used for all issues created by this script
+
+[general.jira]
+instance_url = "https://issues.redhat.com"  # JIRA instance URL
+project = "CPE"  # Name of the project to sync tickets to
+token = "$secrets.jira_token"  # API token to use for authentication
+default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
+label = "infra-releng"  # Label used for all issues created by this script
 
 # Map the ticket state to JIRA project state
 # Recognizable states are:
@@ -12,7 +13,7 @@ jira_label = "infra-releng"  # Label used for all issues created by this script
 # * assigned = ticket is assigned to user
 # * blocked = ticket is blocked (see blocked_label in corresponding section)
 # * closed = ticket is closed
-[General.states]
+[general.jira.statuses]
 new = "New"
 assigned = "In Progress"
 blocked = "Blocked"
@@ -20,35 +21,17 @@ closed = "Done"
 
 
 # Pagure configuration
-[Pagure]
-enabled = true  # Enable/Disable Pagure backend
-pagure_url = "https://pagure.io/"  # URL for pagure endpoint
+[instances."pagure.io"]
+type = "pagure"
+enabled = true  # Enable/Disable Pagure instance
+instance_url = "https://pagure.io/"  # URL for pagure endpoint
 blocked_label = "blocked"  # Label that is marking blocked issues
-# List of repositories to check for tickets
-# When label is set, only tickets with this label will be recovered
-repositories = [
-  { repo = "fedora-infrastructure", label = "" },
-  { repo = "releng", label = "" },
-  { repo = "centos-infra", label = "" },
-  { repo = "fedora-infra/toddlers", label = "cpe" }
-]
+usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
 
-# Map of pagure usernames to jira
-[Pagure.usernames]
-abompard = "abompard@redhat.com"
-t0xic0der = "akdhar@redhat.com"
-amedvede = "amedvede@redhat.com"
-arrfab = "farrotin"
-dherrera = "dherrera@redhat.com"
-dkirwan = "dkirwan"
-#james = "jantill@redhat.com"
-jnsamyak = "samjain@redhat.com"
-jrichardson = "jamricha@redhat.com"
-kevin = "kfenzi.fedora"
-lenkaseg = "lsegura@redhat.com"
-nphilipp = "nphilipp@redhat.com"
-phsmoura = "pmoura@redhat.com"
-patrikp = "ppolakov@redhat.com"
-ryanlerch = "rhn-engineering-rlerch"
-humaton = "thrcka@redhat.com"
-zlopez = "mkonecny@redhat.com"
+[instances."pagure.io".repositories]
+# List of repositories to check for tickets
+# When label is set, only tickets with this label will be covered
+"fedora-infrastructure" = {}
+"releng" = {}
+"centos-infra" = {}
+"fedora-infra/toddlers" = {label = "cpe"}
