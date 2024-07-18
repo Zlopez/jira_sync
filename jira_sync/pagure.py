@@ -26,7 +26,7 @@ class Pagure:
         url = url.rstrip("/")
         self.instance_url = url
 
-    def get_open_project_issues(self, repo: str, label: str = "") -> list[dict]:
+    def get_open_project_issues(self, repo: str, label: str | None = None) -> list[dict]:
         """
         Retrieve all open project issues on project.
 

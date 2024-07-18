@@ -6,11 +6,12 @@ import pytest
 import tomlkit
 from click.testing import CliRunner
 from dotwiz import DotWiz
+from pydantic import HttpUrl
 
 from jira_sync import main
 
 ROOTDIR = Path(__file__).parent.parent
-CONFIG_EXAMPLE_FILE = ROOTDIR / "config.example.toml"
+CONFIG_EXAMPLE_FILE = ROOTDIR / "config-legacy.example.toml"
 
 
 @pytest.fixture
@@ -226,7 +227,7 @@ def test_sync_tickets(pagure_enabled, tmp_path, runner, caplog):
     assert result.exit_code == 0
 
     JIRA.assert_called_once_with(
-        url=general_config["jira_instance"],
+        url=str(HttpUrl(general_config["jira_instance"])),
         token=general_config["jira_token"],
         project=general_config["jira_project"],
         issue_type=general_config["jira_default_issue_type"],
@@ -244,7 +245,7 @@ def test_sync_tickets(pagure_enabled, tmp_path, runner, caplog):
         mock.call(name) in jira.get_open_issues_by_label.call_args_list for name in TEST_REPOS
     )
     assert all(
-        mock.call(name, repo["label"]) in pagure.get_open_project_issues.call_args_list
+        mock.call(name, repo["label"] or None) in pagure.get_open_project_issues.call_args_list
         for name, repo in TEST_REPOS.items()
     )
     assert all(f"Processing repository: {name}" in caplog.text for name in TEST_REPOS)
@@ -275,7 +276,7 @@ def test_sync_tickets(pagure_enabled, tmp_path, runner, caplog):
     )
     assert "Processing issue: https://pagure.io/namespace/test1/issue/3" in caplog.text
     assert "Creating jira ticket from 'https://pagure.io/namespace/test1/issue/3'" in caplog.text
-    assert f"Not transitioning issue CPE-{new_jira_id} with state NEW" in caplog.text
+    assert f"Not transitioning issue CPE-{new_jira_id} with status NEW" in caplog.text
 
     # One Pagure issue has been assigned meanwhile, update JIRA issue
     pagure_issue = TEST_PAGURE_ISSUES[3]

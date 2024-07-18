@@ -22,15 +22,15 @@ class JIRA:
     :attribute jira: Instance of the jira.JIRA object
     :attribute project: Project to work with
     :attribute issue_type: Default issue type for creating issues
-    :attribute project_states: List of states on the project in the format
-                               {"state": "id"}.
-                               Example: {"NEW": "1"}
+    :attribute project_statuses: List of statuses on the project in the format
+                                 {"status": "id"}.
+                                 Example: {"NEW": "1"}
     """
 
     jira: jira.client.JIRA
     project: str
     issue_type: str
-    project_states: dict[Issue, dict[str, str]]
+    project_statuses: dict[Issue, dict[str, str]]
 
     def __init__(
         self,
@@ -50,7 +50,7 @@ class JIRA:
         self.jira = jira.client.JIRA(url, token_auth=token)
         self.project = project
         self.issue_type = issue_type
-        self.project_states = {}
+        self.project_statuses = {}
 
     def get_issue_by_link(self, url: str, repo: str, title: str) -> Issue | None:
         """
@@ -138,30 +138,30 @@ class JIRA:
         except jira.exceptions.JIRAError:
             return None
 
-    def _get_issue_transition_states(self, issue: Issue) -> dict[str, str]:
+    def _get_issue_transition_statuses(self, issue: Issue) -> dict[str, str]:
         """
-        Retrieve and cache possible ticket transition states.
+        Retrieve and cache possible ticket transition statuses.
 
         :param issue: Issue object
 
-        :return: A dictionary mapping state names to ids
+        :return: A dictionary mapping status names to ids
         """
-        if issue not in self.project_states:
-            self.project_states[issue] = {
+        if issue not in self.project_statuses:
+            self.project_statuses[issue] = {
                 transition["name"]: transition["id"] for transition in self.jira.transitions(issue)
             }
-        return self.project_states[issue]
+        return self.project_statuses[issue]
 
-    def transition_issue(self, issue: Issue, state: str) -> None:
+    def transition_issue(self, issue: Issue, status: str) -> None:
         """
-        Transition ticket to a new state.
+        Transition ticket to a new status.
 
         :param issue: Issue object
-        :param state: New state to move to
+        :param status: New status to move to
         """
-        if issue.fields.status.name != state:
-            log.debug("Changing status to '%s' in ticket %s", state, issue.key)
-            self.jira.transition_issue(issue, self._get_issue_transition_states(issue)[state])
+        if issue.fields.status.name != status:
+            log.debug("Changing status to '%s' in ticket %s", status, issue.key)
+            self.jira.transition_issue(issue, self._get_issue_transition_statuses(issue)[status])
 
     def assign_to_issue(self, issue: Issue, user: str | None) -> None:
         """
