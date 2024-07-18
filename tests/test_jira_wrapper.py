@@ -28,9 +28,9 @@ def jira_obj(jira_params, mocked_jira_pkg):
 
 
 class TestJIRA:
-    ISSUE_STATES = {
-        "OLDSTATE": "l1234",
-        "NEWSTATE": "abc345",
+    ISSUE_STATUSES = {
+        "OLDSTATUS": "l1234",
+        "NEWSTATUS": "abc345",
     }
 
     def test___init__(self, jira_obj, jira_params, mocked_jira_pkg):
@@ -121,18 +121,18 @@ class TestJIRA:
             assert retval is None
 
     @pytest.mark.parametrize("cold_cache", (True, False), ids=("cold-cache", "hot-cache"))
-    def test__get_issue_transition_states(self, cold_cache, jira_obj):
+    def test__get_issue_transition_statuses(self, cold_cache, jira_obj):
         issue_sentinel = object()
 
-        with mock.patch.dict(jira_obj.project_states, clear=True):
+        with mock.patch.dict(jira_obj.project_statuses, clear=True):
             if cold_cache:
                 jira_obj.jira.transitions.return_value = [
-                    {"name": key, "id": value} for key, value in self.ISSUE_STATES.items()
+                    {"name": key, "id": value} for key, value in self.ISSUE_STATUSES.items()
                 ]
             else:
-                jira_obj.project_states[issue_sentinel] = self.ISSUE_STATES
+                jira_obj.project_statuses[issue_sentinel] = self.ISSUE_STATUSES
 
-            assert jira_obj._get_issue_transition_states(issue_sentinel) == self.ISSUE_STATES
+            assert jira_obj._get_issue_transition_statuses(issue_sentinel) == self.ISSUE_STATUSES
 
         if cold_cache:
             jira_obj.jira.transitions.assert_called_once_with(issue_sentinel)
@@ -143,18 +143,18 @@ class TestJIRA:
     def test_transition_issue(self, needs_transition, jira_obj, caplog):
         issue = mock.Mock(key="KEY")
         if needs_transition:
-            issue.fields.status.name = "OLDSTATE"
+            issue.fields.status.name = "OLDSTATUS"
         else:
-            issue.fields.status.name = "NEWSTATE"
+            issue.fields.status.name = "NEWSTATUS"
 
-        with caplog.at_level("DEBUG"), mock.patch.dict(jira_obj.project_states, clear=True):
-            jira_obj.project_states[issue] = self.ISSUE_STATES
-            jira_obj.transition_issue(issue, "NEWSTATE")
+        with caplog.at_level("DEBUG"), mock.patch.dict(jira_obj.project_statuses, clear=True):
+            jira_obj.project_statuses[issue] = self.ISSUE_STATUSES
+            jira_obj.transition_issue(issue, "NEWSTATUS")
 
         if needs_transition:
-            assert "Changing status to 'NEWSTATE' in ticket KEY" in caplog.text
+            assert "Changing status to 'NEWSTATUS' in ticket KEY" in caplog.text
             jira_obj.jira.transition_issue.assert_called_once_with(
-                issue, self.ISSUE_STATES["NEWSTATE"]
+                issue, self.ISSUE_STATUSES["NEWSTATUS"]
             )
         else:
             jira_obj.jira.transition_issue.assert_not_called()
