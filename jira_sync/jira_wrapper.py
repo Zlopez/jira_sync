@@ -17,14 +17,14 @@ log = logging.getLogger(__name__)
 
 class JIRA:
     """
-    Class for interacting with JIRA API.
+    Class for interacting with the JIRA API.
 
-    Attributes:
-      jira: Instance of the jira.JIRA object
-      project: Project to work with
-      issue_type: Default issue type for creating issues
-      project_states: List of states on the project in format {"state": "id"}.
-                      Example: {"NEW": "1"}
+    :attribute jira: Instance of the jira.JIRA object
+    :attribute project: Project to work with
+    :attribute issue_type: Default issue type for creating issues
+    :attribute project_states: List of states on the project in the format
+                               {"state": "id"}.
+                               Example: {"NEW": "1"}
     """
 
     jira: jira.client.JIRA
@@ -40,13 +40,12 @@ class JIRA:
         issue_type: str,
     ):
         """
-        Class constructor.
+        Object constructor.
 
-        Params:
-          url: URL to JIRA server
-          token: Token to use for authentication
-          project: Project to work with
-          issue_type: Default issue type for creating issues
+        :param url: URL to JIRA server
+        :param token: Token to use for authentication
+        :param project: Project to work with
+        :param issue_type: Default issue type for creating issues
         """
         self.jira = jira.client.JIRA(url, token_auth=token)
         self.project = project
@@ -55,15 +54,13 @@ class JIRA:
 
     def get_issue_by_link(self, url: str, repo: str, title: str) -> Issue | None:
         """
-        Return issue that has external issue URL set to url.
+        Retrieve the issue with its external issue URL set to url.
 
-        Params:
-          url: URL to search for
-          repo: Project namespace/name
-          title: Title of the ticket
+        :param url: URL to search for
+        :param repo: Project namespace/name
+        :param title: Title of the ticket
 
-        Returns:
-          Retrieved issue or None.
+        :return: Retrieved issue or None
         """
         # Replace special characters
         title = title.replace("[", "\\\\[")
@@ -98,11 +95,9 @@ class JIRA:
         """
         Retrieve open issues for the specified label.
 
-        Params:
-          label: Label to retrieve the issues by.
+        :param label: Label to retrieve the issues by
 
-        Returns:
-          List of issues.
+        :return: List of issues
         """
         issues = cast(
             jira.client.ResultList[Issue],
@@ -122,16 +117,14 @@ class JIRA:
         self, summary: str, description: str, url: str, label: str = ""
     ) -> Issue | None:
         """
-        Create new issue in JIRA.
+        Create a new issue in JIRA.
 
-        Params:
-          summary: Name of the ticket
-          description: Description of the ticket
-          url: URL to add to url field, it is also added to description
-          label: Label for the issue
+        :param summary: Name of the ticket
+        :param description: Description of the ticket
+        :param url: URL to add to url field, it is also added to description
+        :param label: Label for the issue
 
-        Returns:
-          Issue object or None.
+        :return: Issue object or None
         """
         issue_dict = {
             "project": {"key": self.project},
@@ -149,9 +142,9 @@ class JIRA:
         """
         Retrieve and cache possible ticket transition states.
 
-        Params:
-          issue: Issue object
-        Returns: A dictionary mapping state names to ids
+        :param issue: Issue object
+
+        :return: A dictionary mapping state names to ids
         """
         if issue not in self.project_states:
             self.project_states[issue] = {
@@ -163,9 +156,8 @@ class JIRA:
         """
         Transition ticket to a new state.
 
-        Params:
-          issue: Issue object
-          state: New state to move to
+        :param issue: Issue object
+        :param state: New state to move to
         """
         if issue.fields.status.name != state:
             log.debug("Changing status to '%s' in ticket %s", state, issue.key)
@@ -173,11 +165,10 @@ class JIRA:
 
     def assign_to_issue(self, issue: Issue, user: str | None) -> None:
         """
-        Assign user to ticket.
+        Assign user to an issue.
 
-        Params:
-          issue: Issue object
-          user: Username to assign to ticket
+        :param issue: Issue object
+        :param user: Username to assign to ticket
         """
         if user != getattr(issue.fields.assignee, "name", None):
             log.debug("Assigning user %s to %s", user, issue.key)
@@ -185,11 +176,10 @@ class JIRA:
 
     def add_label(self, issue: Issue, label: str) -> None:
         """
-        Add label to ticket.
+        Add label to an issue.
 
-        Params:
-          issue: Issue object
-          label: Label to add
+        :param issue: Issue object
+        :param label: Label to add
         """
         if label not in issue.fields.labels:
             log.debug("Adding label %s to %s", label, issue.key)
