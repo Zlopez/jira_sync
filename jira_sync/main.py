@@ -18,6 +18,8 @@ log = logging.getLogger(__name__)
 def cli(verbose: bool):
     """
     Click main function.
+
+    :param verbose: Log verbosely, or not
     """
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
@@ -34,9 +36,7 @@ def sync_tickets(config: str):
     """
     Sync the ticket from sources provided in configuration file.
 
-    Params:
-      config: Path to configuration file.
-      verbose: Verbose flag
+    :param config: Path to configuration file
     """
     with open(config, "rb") as config_file:
         config_dict = tomllib.load(config_file)
