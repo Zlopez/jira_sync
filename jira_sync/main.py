@@ -35,18 +35,20 @@ def cli(verbose: bool):
 @click.option(
     "--config-file", "--config", default="config.toml", help="Path to configuration file."
 )
-def sync_tickets(config_file: str):
+@click.option("--dry-run", "-n", is_flag=True, default=False, help="Don’t change anything.")
+def sync_tickets(config_file: str, dry_run: bool):
     """
     Sync the ticket from sources provided in configuration file.
 
     :param config: Path to configuration file
+    :param dry_run: Don’t do anything
     """
     config = load_configuration(config_file)
     jira_config = config.general.jira
 
     jira = JIRA(
-        url=str(jira_config.instance_url),
-        token=jira_config.token,
+        url=str(jira_config.instance_url) if not dry_run else None,
+        token=jira_config.token if not dry_run else None,
         project=jira_config.project,
         issue_type=jira_config.default_issue_type,
     )
