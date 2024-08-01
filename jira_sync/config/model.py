@@ -54,7 +54,11 @@ class PagureConfig(InstanceConfigBase):
     type: Literal["pagure"]
 
 
-InstanceConfig = PagureConfig
+class GitHubConfig(InstanceConfigBase):
+    type: Literal["github"]
+
+
+InstanceConfig = PagureConfig | GitHubConfig
 InstancesConfig = dict[str, InstanceConfig]
 
 
