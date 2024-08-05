@@ -17,57 +17,63 @@ log = logging.getLogger(__name__)
 
 class JIRA:
     """
-    Class for interacting with JIRA API.
+    Class for interacting with the JIRA API.
 
-    Attributes:
-      jira: Instance of the jira.JIRA object
-      project: Project to work with
-      issue_type: Default issue type for creating issues
-      project_states: List of states on the project in format {"state": "id"}.
-                      Example: {"NEW": "1"}
+    :attribute jira: Instance of the jira.JIRA object
+    :attribute project: Project to work with
+    :attribute issue_type: Default issue type for creating issues
+    :attribute project_statuses: List of statuses on the project in the format
+                                 {"status": "id"}.
+                                 Example: {"NEW": "1"}
     """
 
-    jira: jira.client.JIRA
+    jira: jira.client.JIRA | None
     project: str
     issue_type: str
-    project_states: dict[Issue, dict[str, str]]
+    project_statuses: dict[Issue, dict[str, str]]
 
     def __init__(
         self,
-        url: str,
-        token: str,
+        url: str | None,
+        token: str | None,
         project: str,
         issue_type: str,
     ):
         """
-        Class constructor.
+        Object constructor.
 
-        Params:
-          url: URL to JIRA server
-          token: Token to use for authentication
-          project: Project to work with
-          issue_type: Default issue type for creating issues
+        Set url and token to None for dry-run (simulated) operation.
+
+        :param url: URL to JIRA server
+        :param token: Token to use for authentication
+        :param project: Project to work with
+        :param issue_type: Default issue type for creating issues
         """
-        self.jira = jira.client.JIRA(url, token_auth=token)
+        if url and token:
+            self.jira = jira.client.JIRA(url, token_auth=token)
+        else:
+            self.jira = None
         self.project = project
         self.issue_type = issue_type
-        self.project_states = {}
+        self.project_statuses = {}
 
     def get_issue_by_link(self, url: str, repo: str, title: str) -> Issue | None:
         """
-        Return issue that has external issue URL set to url.
+        Retrieve the issue with its external issue URL set to url.
 
-        Params:
-          url: URL to search for
-          repo: Project namespace/name
-          title: Title of the ticket
+        :param url: URL to search for
+        :param repo: Project namespace/name
+        :param title: Title of the ticket
 
-        Returns:
-          Retrieved issue or None.
+        :return: Retrieved issue or None
         """
+        if not self.jira:
+            return None
+
         # Replace special characters
         title = title.replace("[", "\\\\[")
         title = title.replace("]", "\\\\]")
+
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
@@ -98,12 +104,13 @@ class JIRA:
         """
         Retrieve open issues for the specified label.
 
-        Params:
-          label: Label to retrieve the issues by.
+        :param label: Label to retrieve the issues by
 
-        Returns:
-          List of issues.
+        :return: List of issues
         """
+        if not self.jira:
+            return []
+
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
@@ -122,17 +129,18 @@ class JIRA:
         self, summary: str, description: str, url: str, label: str = ""
     ) -> Issue | None:
         """
-        Create new issue in JIRA.
+        Create a new issue in JIRA.
 
-        Params:
-          summary: Name of the ticket
-          description: Description of the ticket
-          url: URL to add to url field, it is also added to description
-          label: Label for the issue
+        :param summary: Name of the ticket
+        :param description: Description of the ticket
+        :param url: URL to add to url field, it is also added to description
+        :param label: Label for the issue
 
-        Returns:
-          Issue object or None.
+        :return: Issue object or None
         """
+        if not self.jira:
+            return None
+
         issue_dict = {
             "project": {"key": self.project},
             "summary": summary,
@@ -145,52 +153,61 @@ class JIRA:
         except jira.exceptions.JIRAError:
             return None
 
-    def _get_issue_transition_states(self, issue: Issue) -> dict[str, str]:
+    def _get_issue_transition_statuses(self, issue: Issue) -> dict[str, str]:
         """
-        Retrieve and cache possible ticket transition states.
+        Retrieve and cache possible ticket transition statuses.
 
-        Params:
-          issue: Issue object
-        Returns: A dictionary mapping state names to ids
+        :param issue: Issue object
+
+        :return: A dictionary mapping status names to ids
         """
-        if issue not in self.project_states:
-            self.project_states[issue] = {
+        if not self.jira:
+            return {}
+
+        if issue not in self.project_statuses:
+            self.project_statuses[issue] = {
                 transition["name"]: transition["id"] for transition in self.jira.transitions(issue)
             }
-        return self.project_states[issue]
+        return self.project_statuses[issue]
 
-    def transition_issue(self, issue: Issue, state: str) -> None:
+    def transition_issue(self, issue: Issue, status: str) -> None:
         """
-        Transition ticket to a new state.
+        Transition ticket to a new status.
 
-        Params:
-          issue: Issue object
-          state: New state to move to
+        :param issue: Issue object
+        :param status: New status to move to
         """
-        if issue.fields.status.name != state:
-            log.debug("Changing status to '%s' in ticket %s", state, issue.key)
-            self.jira.transition_issue(issue, self._get_issue_transition_states(issue)[state])
+        if not self.jira:
+            return
+
+        if issue.fields.status.name != status:
+            log.debug("Changing status to '%s' in ticket %s", status, issue.key)
+            self.jira.transition_issue(issue, self._get_issue_transition_statuses(issue)[status])
 
     def assign_to_issue(self, issue: Issue, user: str | None) -> None:
         """
-        Assign user to ticket.
+        Assign user to an issue.
 
-        Params:
-          issue: Issue object
-          user: Username to assign to ticket
+        :param issue: Issue object
+        :param user: Username to assign to ticket
         """
+        if not self.jira:
+            return
+
         if user != getattr(issue.fields.assignee, "name", None):
             log.debug("Assigning user %s to %s", user, issue.key)
             self.jira.assign_issue(issue.id, user)
 
     def add_label(self, issue: Issue, label: str) -> None:
         """
-        Add label to ticket.
+        Add label to an issue.
 
-        Params:
-          issue: Issue object
-          label: Label to add
+        :param issue: Issue object
+        :param label: Label to add
         """
+        if not self.jira:
+            return
+
         if label not in issue.fields.labels:
             log.debug("Adding label %s to %s", label, issue.key)
             issue.add_field_value("labels", label)
