@@ -19,7 +19,7 @@ jobs:
       run: |
         cp .github/workflows/workflow_config.toml config.toml
         sed -i -e "s|\$secrets.jira_token|$JIRA_TOKEN|g" config.toml
-        cp pagureio_jira_usermap.toml pagureio_jira_usermap.toml
+        cp .github/workflows/pagureio_jira_usermap.toml pagureio_jira_usermap.toml
 
     - name: Run the script
       run: |
