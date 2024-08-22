@@ -40,7 +40,7 @@ class JIRA:
         issue_type: str,
     ):
         """
-        Object constructor.
+        Initialize the JIRA object.
 
         Set url and token to None for dry-run (simulated) operation.
 
