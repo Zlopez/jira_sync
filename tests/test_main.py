@@ -92,7 +92,7 @@ TEST_PAGURE_ISSUES = [
             {"repo": "namespace/test1", "assignee": {"name": "zod"}},
             {
                 "repo": "space_the_final_frontier",
-                "tags": ("catch_me_if_you_can"),
+                "tags": ("catch_me_if_you_can",),
             },
             {
                 "repo": "test2",
