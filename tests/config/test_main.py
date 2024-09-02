@@ -39,7 +39,21 @@ EXPECTED_CONFIG = {
             },
             "type": "pagure",
             "usermap": {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"},
-        }
+        },
+        "github.com": {
+            "blocked_label": "blocked",
+            "enabled": True,
+            "token": None,
+            "instance_api_url": "https://api.github.com/",
+            "instance_url": "https://github.com/",
+            "label": None,
+            "repositories": {
+                "org/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
+                "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},
+            },
+            "type": "github",
+            "usermap": {"github_user1": "jira_user1", "github_user2": "jira_user2"},
+        },
     },
 }
 
@@ -58,35 +72,43 @@ EXPECTED_CONFIG = {
 @pytest.mark.parametrize("param_type", (str, Path))
 def test_main(usermap_type: str, config_source: str, param_type: type, tmp_path):
     override = config_source == "repo"
-    usermap = {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"}
+    usermaps = {
+        "pagure.io": {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"},
+        "github.com": {"github_user1": "jira_user1", "github_user2": "jira_user2"},
+    }
+    usermap_files = {}
 
     if usermap_type != "direct":
-        usermap_file = tmp_path / "fedora_jira_usermap.toml"
-        with usermap_file.open("w") as fp:
-            tomlkit.dump(usermap, fp)
+        for instance_name in ("pagure.io", "github.com"):
+            usermap_files[instance_name] = tmp_path / f"{instance_name}_jira_usermap.toml"
+            with usermap_files[instance_name].open("w") as fp:
+                tomlkit.dump(usermaps[instance_name], fp)
 
     with CONFIG_PATH.open("r") as fp:
         config_toml = tomlkit.load(fp)
-        if "instances" in config_toml:
-            for instance_def in config_toml["instances"].values():
-                match usermap_type:
-                    case "relative":
-                        instance_def["usermap"] = "fedora_jira_usermap.toml"
-                    case "absolute":
-                        instance_def["usermap"] = str(tmp_path / "fedora_jira_usermap.toml")
-                    case "direct":
-                        instance_def["usermap"] = usermap
+        for instance_name, instance_def in config_toml["instances"].items():
+            match usermap_type:
+                case "relative":
+                    instance_def["usermap"] = f"{instance_name}_jira_usermap.toml"
+                case "absolute":
+                    instance_def["usermap"] = str(tmp_path / f"{instance_name}_jira_usermap.toml")
+                case "direct":
+                    instance_def["usermap"] = usermaps[instance_name]
 
-                if override:
-                    for repo_def in instance_def["repositories"].values():
-                        repo_def["enabled"] = choice((True, False))  # noqa: S311
-                        repo_def["blocked_label"] = "Blocked, I say!"
+            if override:
+                for repo_def in instance_def["repositories"].values():
+                    repo_def["enabled"] = choice((True, False))  # noqa: S311
+                    repo_def["blocked_label"] = "Blocked, I say!"
 
     tmp_config_file = tmp_path / "config.toml"
     with tmp_config_file.open("w") as fp:
         tomlkit.dump(config_toml, fp)
 
-    expected_config = deepcopy(EXPECTED_CONFIG)
+    expected_config = deepcopy(EXPECTED_CONFIG) | {"config_path": str(tmp_config_file)}
+    for instance in expected_config["instances"].values():
+        # Unset in configuration
+        instance["name"] = None
+
     if override:
         for instance_name, instance_def in expected_config["instances"].items():
             for repo_name, repo_def in instance_def["repositories"].items():

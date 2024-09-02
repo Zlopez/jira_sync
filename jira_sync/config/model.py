@@ -40,6 +40,7 @@ class RepoConfig(BaseModel):
 
 class InstanceConfigBase(BaseModel):
     type: str
+    name: str | None = None
     instance_url: HttpUrl
     instance_api_url: HttpUrl | None = None
     enabled: bool = True
@@ -56,6 +57,7 @@ class PagureConfig(InstanceConfigBase):
 
 class GitHubConfig(InstanceConfigBase):
     type: Literal["github"]
+    instance_api_url: HttpUrl
 
 
 InstanceConfig = PagureConfig | GitHubConfig
@@ -63,5 +65,6 @@ InstancesConfig = dict[str, InstanceConfig]
 
 
 class Config(BaseModel):
+    config_path: Path
     general: GeneralConfig
     instances: InstancesConfig

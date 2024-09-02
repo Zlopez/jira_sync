@@ -8,15 +8,10 @@ from typing import Any
 
 import requests
 
-from .base import Issue, IssueStatus, Repository
+from .base import APIBase, Instance, Issue, IssueStatus, Repository
 
 
-class PagureRepository(Repository):
-    """Wrapper class around pagure API for a single repository."""
-
-    type = "pagure"
-    _api_result_selectors = {"issues": "issues"}
-
+class PagureBase(APIBase):
     def get_next_page(
         self,
         *,
@@ -35,9 +30,18 @@ class PagureRepository(Repository):
             else:
                 endpoint = ""
 
-            url = f"{self.instance_url}/api/0/{self.repo}{endpoint}"
+            url = f"{self.get_base_url()}{endpoint}"
 
         return self.sanitize_requests_params(kwargs | {"url": url})
+
+
+class PagureRepository(PagureBase, Repository):
+    """Wrapper class around pagure API for a single repository."""
+
+    _api_result_selectors = {"issues": "issues"}
+
+    def get_base_url(self) -> str:
+        return f"{self.instance.instance_api_url}/{self.name}"
 
     def normalize_issue(self, api_result: dict[str, Any]) -> Issue:
         full_url = api_result["full_url"]
@@ -76,3 +80,20 @@ class PagureRepository(Repository):
         if not self.label:
             return {}
         return {"params": {"tags": self.label}}
+
+
+class PagureInstance(PagureBase, Instance):
+    """Wrapper class around pagure API for the whole instance."""
+
+    type = "pagure"
+    repo_cls = PagureRepository
+
+    @property
+    def instance_api_url(self) -> str | None:
+        if not hasattr(self, "_instance_api_url"):
+            self._instance_api_url = f"{self.instance_url}/api/0"
+        return self._instance_api_url
+
+    @instance_api_url.setter
+    def instance_api_url(self, value: str) -> None:
+        self._instance_api_url = value

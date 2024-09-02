@@ -5,11 +5,15 @@ API wrapper base for source code forges
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, ClassVar, Self
+from pathlib import Path
+from typing import Annotated, Any, ClassVar, Self, Type
+from weakref import ProxyType, proxy
 
 import requests
 from jira import Issue as JiraIssue
 from pydantic import AnyUrl
+
+from ..config.model import InstanceConfig
 
 log = logging.getLogger(__name__)
 
@@ -38,83 +42,23 @@ class Issue:
     jira_issue: JiraIssue | None = None
 
 
-class Repository:
-    """Abstract wrapper class around API calls to git repositories."""
+class APIBase:
+    """Base class for communicating with web APIs."""
 
-    _types_subclasses: ClassVar[dict[str, type]] = {}
     _requests_params: ClassVar[set[str]] = {"url", "params", "data", "json", "headers", "cookies"}
     _api_result_selectors: ClassVar[dict[str, str]] = {}
 
-    type: ClassVar[str]
-
-    instance_url: str
-    instance_api_url: str | None
-    repo: str
-    enabled: bool
+    # Declare token here so it can be used in get_next_page(). Repository objects will dispatch
+    # access to their instances.
     token: str | None
-    blocked_label: str | None
-    usermap: dict[str, str]
-
-    def __init_subclass__(cls) -> None:
-        """Register subclasses by `type` key."""
-        if cls.type in cls._types_subclasses:
-            raise TypeError(f"Duplicate subclass for type {cls.type}")  # pragma: no cover
-        cls._types_subclasses[cls.type] = cls
-
-    def __init__(
-        self,
-        *,
-        instance_url: str | AnyUrl,
-        instance_api_url: str | AnyUrl | None,
-        repo: str,
-        enabled: bool,
-        token: str | None,
-        label: str | None,
-        blocked_label: str | None,
-        usermap: dict[str, str],
-        **kwargs,
-    ) -> None:
-        """
-        Initialize a Repository object.
-
-        :param instance_url: (Base) URL of the server hosting the repository
-        :param instance_api_url: (Base) URL of the API server hosting the
-            repository
-        :param repo: Name or path of the repository
-        :param enabled: If the repository is enabled or not
-        :param usermap: Mapping of repository usernames to JIRA usernames
-        """
-        if not isinstance(instance_url, str):
-            instance_url = str(instance_url)
-        self.instance_url = instance_url.rstrip("/")
-
-        if instance_api_url:
-            if not isinstance(instance_api_url, str):
-                instance_api_url = str(instance_api_url)
-            self.instance_api_url = instance_api_url.rstrip("/")
-        else:
-            self.instance_api_url = None
-
-        self.repo = repo
-        self.enabled = enabled
-        self.token = token
-        self.label = label
-        self.blocked_label = blocked_label
-
-        self.usermap = usermap
-
-    @classmethod
-    def from_config(cls, config: dict[str, Any]) -> Self:
-        """Create a Repository object from a configuration dictionary.
-
-        :param config: Dictionary which configures the repository
-        :return: The created Repository object
-        """
-        return cls._types_subclasses[config["type"]](**config)
 
     @classmethod
     def sanitize_requests_params(cls, params: dict[str, Any]) -> dict[str, Any]:
         return {key: value for key, value in params.items() if key in cls._requests_params}
+
+    def get_base_url(self) -> str:
+        """Determine base url of an instance or repository in the instance."""
+        raise NotImplementedError
 
     def get_next_page(
         self,
@@ -165,6 +109,32 @@ class Repository:
         """
         raise NotImplementedError
 
+
+class Repository(APIBase):
+    """Proxy wrapping remote git repositories.
+
+    This class is abstract, concrete git forge instances (for Pagure, GitHub,
+    etc.) instantiate subclasses for the repositories they handle.
+    """
+
+    instance: Annotated[ProxyType, "Instance"]
+    name: str
+    _config_params: dict[str, Any]
+
+    def __init__(self, instance: "Instance", name: str, **config_params: dict[str, Any]):
+        # Avoid cyclical dependency
+        self.instance = proxy(instance)
+        self.name = name
+        # Filter out unset configuration parameters
+        self._config_params = {
+            key: value for key, value in config_params.items() if value is not None
+        }
+
+    def __getattr__(self, key):
+        if key not in self._config_params:
+            return getattr(self.instance, key)
+        return self._config_params[key]
+
     def get_issue_params(self) -> dict[str, Any]:
         """Get query parameters to select pertinent issues.
 
@@ -197,6 +167,110 @@ class Repository:
                 issues.extend(self.normalize_issue(issue) for issue in partial_issues)
                 next_page = self.get_next_page(endpoint="issues", response=response, **kwargs)
 
-        log.info("Retrieved %s open issues from %s:%s", len(issues), self.instance_url, self.repo)
+        log.info("Retrieved %s open issues from %s:%s", len(issues), self.instance.name, self.name)
 
         return issues
+
+
+class Instance(APIBase):
+    """Proxy wrapping remote git forges.
+
+    This class is abstract, its from_config() class method acts as a
+    factory, dispatching to concrete subclasses which implement the
+    functionality for concrete types of git forges.
+    """
+
+    _types_subclasses: ClassVar[dict[str, type]] = {}
+
+    type: ClassVar[str]
+    repo_cls: ClassVar[Type["Repository"]] = Repository
+
+    name: str
+    instance_url: str
+    # Allow computing this from instance_url in a property
+    _instance_api_url: str
+    token: str | None
+    blocked_label: str | None
+    enabled: bool
+
+    usermap: dict[str, str]
+    repositories: dict[str, "Repository"]
+
+    def __init_subclass__(cls) -> None:
+        """Register subclasses by `type` key."""
+        if cls.type in cls._types_subclasses:
+            raise TypeError(f"Duplicate subclass for type {cls.type}")  # pragma: no cover
+        cls._types_subclasses[cls.type] = cls
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        instance_url: str | AnyUrl,
+        instance_api_url: str | AnyUrl | None,
+        enabled: bool,
+        token: str | None,
+        label: str | None,
+        blocked_label: str | None,
+        usermap: dict[str, str],
+        repositories: dict[str, dict[str, Any]],
+        **kwargs,
+    ) -> None:
+        """
+        Initialize an Instance object.
+
+        :param name: Name of the instance
+        :param instance_url: (Root) URL of the server hosting the instance
+        :param instance_api_url: Optional (Root) URL of the API server hosting the
+            repository
+        :param enabled: If the repository is enabled or not
+        :param usermap: Mapping of forge usernames to JIRA usernames
+        :param repositories: Mapping of repository names to configuration
+        """
+        self.name = name
+
+        if not isinstance(instance_url, str):
+            instance_url = str(instance_url)
+        self.instance_url = instance_url.rstrip("/")
+
+        if instance_api_url:
+            if not isinstance(instance_api_url, str):
+                instance_api_url = str(instance_api_url)
+            self.instance_api_url = instance_api_url.rstrip("/")
+
+        self.enabled = enabled
+        self.token = token
+        self.label = label
+        self.blocked_label = blocked_label
+
+        self.usermap = usermap
+        self.repositories = {
+            name: self.repo_cls(instance=self, name=name, **repo_spec)
+            for name, repo_spec in repositories.items()
+        }
+
+        super().__init__()
+
+    @classmethod
+    def from_config(cls, name: str, config_path: Path, config: InstanceConfig) -> Self:
+        """Create an Instance object from a configuration dictionary.
+
+        :param name: Name of the instance
+        :param config_path: Path to the configuration file
+        :param config: Pydantic model configuring the instance
+        :return: The created Instance object
+        """
+        kwargs = config.model_dump()
+        kwargs["name"] = name
+        return cls._types_subclasses[config.type](config_path=config_path, **kwargs)
+
+    def get_base_url(self) -> str:
+        return self.instance_api_url or self.instance_url
+
+    @property
+    def instance_api_url(self) -> str | None:
+        return getattr(self, "_instance_api_url", None)
+
+    @instance_api_url.setter
+    def instance_api_url(self, value: str) -> None:
+        self._instance_api_url = value
