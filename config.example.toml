@@ -36,3 +36,18 @@ usermap = "fedora_jira_usermap.toml"  # External file, can be reused
 [instances."pagure.io".repositories]
 "namespace/test1" = {}
 "test2" = {label = "test"}
+
+[instances."github.com"]
+type = "github"
+enabled = true
+instance_url = "https://github.com"
+instance_api_url = "https://api.github.com"
+blocked_label = "blocked"
+
+[instances."github.com".usermap]
+github_user1 = "jira_user1"
+github_user2 = "jira_user2"
+
+[instances."github.com".repositories]
+"org/test1" = {}
+"test2" = {label = "test"}

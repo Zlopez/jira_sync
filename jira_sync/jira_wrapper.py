@@ -5,7 +5,7 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
 
 import logging
-from typing import cast
+from typing import Sequence, cast
 
 import jira
 
@@ -57,11 +57,12 @@ class JIRA:
         self.issue_type = issue_type
         self.project_statuses = {}
 
-    def get_issue_by_link(self, url: str, repo: str, title: str) -> Issue | None:
+    def get_issue_by_link(self, *, url: str, instance: str, repo: str, title: str) -> Issue | None:
         """
         Retrieve the issue with its external issue URL set to url.
 
         :param url: URL to search for
+        :param instance: Instance name
         :param repo: Project namespace/name
         :param title: Title of the ticket
 
@@ -77,15 +78,8 @@ class JIRA:
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
-                (
-                    "project = "
-                    + self.project
-                    + ' AND Description ~ "'
-                    + url
-                    + '" AND labels = "'
-                    + repo
-                    + '"'
-                )
+                f'project = "{self.project}" AND Description ~ "{url}"'
+                + f' AND labels IN ("{instance}:{repo}", "{repo}")'
             ),
         )
 
@@ -100,33 +94,34 @@ class JIRA:
 
         return issues[0]
 
-    def get_open_issues_by_label(self, label: str) -> list[Issue]:
+    def get_open_issues_by_labels(self, labels: str | Sequence[str]) -> list[Issue]:
         """
         Retrieve open issues for the specified label.
 
-        :param label: Label to retrieve the issues by
+        :param labels: Labels to retrieve the issues by
 
         :return: List of issues
         """
         if not self.jira:
             return []
 
+        if isinstance(labels, str):
+            labels = [labels]
+
+        labels_str = ", ".join(f'"{label}"' for label in labels)
+
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
-                "project = "
-                + self.project
-                + ' AND labels = "'
-                + label
-                + '"'
-                + " AND status not in (Done, Closed)",
+                f'project = "{self.project}" AND labels IN ({labels_str})'
+                + ' AND status NOT IN ("Done", "Closed")',
                 maxResults=0,
             ),
         )
         return issues
 
     def create_issue(
-        self, summary: str, description: str, url: str, label: str = ""
+        self, *, summary: str, description: str, url: str, label: str = ""
     ) -> Issue | None:
         """
         Create a new issue in JIRA.

@@ -9,7 +9,7 @@ import click
 
 from .config import load_configuration
 from .jira_wrapper import JIRA
-from .repositories import IssueStatus, Repository
+from .repositories import Instance, IssueStatus
 
 log = logging.getLogger(__name__)
 
@@ -66,16 +66,24 @@ def sync_tickets(config_file: str, dry_run: bool):
     # All issues encountered in repositories
     all_repo_issues = set()
 
-    for instance_spec in config.instances.values():
-        for repo_name, repo_spec in instance_spec.repositories.items():
-            log.info("Processing repository: %s", repo_name)
-            repo = Repository.from_config(
-                config=instance_spec.model_dump() | repo_spec.model_dump() | {"repo": repo_name}
-            )
+    instances_by_name = {
+        instance_name: Instance.from_config(
+            name=instance_name, config_path=config.config_path, config=instance_spec
+        )
+        for instance_name, instance_spec in config.instances.items()
+        if instance_spec.enabled
+    }
+
+    for instance_name, instance in instances_by_name.items():
+        log.info("Processing instance: %s", instance_name)
+        for repo_name, repo in instance.repositories.items():
+            log.info("Processing repository: %s:%s", instance_name, repo_name)
             if not repo.enabled:
                 continue
 
-            jira_issues = jira.get_open_issues_by_label(repo_name)
+            jira_issues = jira.get_open_issues_by_labels(
+                (f"{instance_name}:{repo_name}", repo_name)
+            )
             all_jira_issues |= set(jira_issues)
             log.info(
                 "Retrieved %s issues from jira for '%s' repository: %s",
@@ -126,16 +134,21 @@ def sync_tickets(config_file: str, dry_run: bool):
 
         if not jira_issue:
             jira_issue = jira.get_issue_by_link(
-                repo_issue.full_url, repo_issue.repository.repo, repo_issue.title
+                url=repo_issue.full_url,
+                instance=repo_issue.repository.instance.name,
+                repo=repo_issue.repository.name,
+                title=repo_issue.title,
             )
 
         if not jira_issue:
             log.debug("Creating jira ticket from '%s'", repo_issue.full_url)
+            instance_name = repo_issue.repository.instance.name
+            repo_name = repo_issue.repository.name
             jira_issue = jira.create_issue(
-                repo_issue.title,
-                repo_issue.content,
-                repo_issue.full_url,
-                repo_issue.repository.repo,
+                summary=repo_issue.title,
+                description=repo_issue.content,
+                url=repo_issue.full_url,
+                label=f"{instance_name}:{repo_name}",
             )
             if not jira_issue:
                 log.error("Couldn’t create new JIRA issue from '%s'", repo_issue.full_url)

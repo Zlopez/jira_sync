@@ -19,7 +19,7 @@ def load_configuration(config_path: Path | str) -> Config:
     with config_path.open("rb") as fp:
         config_raw = tomllib.load(fp)
 
-    config = Config.model_validate(config_raw)
+    config = Config.model_validate(config_raw | {"config_path": config_path})
 
     for instance in config.instances.values():
         if isinstance(instance.usermap, Path):

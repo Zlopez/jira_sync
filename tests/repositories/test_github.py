@@ -6,12 +6,10 @@ import requests
 from jira_sync.repositories import github
 from jira_sync.repositories.base import Issue, IssueStatus
 
-from .test_base import BaseTestRepository
+from .test_base import BaseTestInstance, BaseTestRepository
 
 
-class TestGitHubRepository(BaseTestRepository):
-    cls = github.GitHubRepository
-
+class GitHubTestBase:
     @pytest.mark.parametrize(
         "testcase",
         (
@@ -26,7 +24,7 @@ class TestGitHubRepository(BaseTestRepository):
         ),
     )
     @pytest.mark.parametrize(
-        "endpoint", ("issues", None), ids=("with-endpoint", "without-endpoint")
+        "endpoint", ("an_endpoint", None), ids=("with-endpoint", "without-endpoint")
     )
     def test_get_next_page(self, testcase, endpoint):
         if "first-page" in testcase:
@@ -39,9 +37,9 @@ class TestGitHubRepository(BaseTestRepository):
         without_token = "without-token" in testcase
         with_headers = "with-headers" in testcase
 
-        repo = self.create_repo()
+        obj = self.create_obj()
         if not without_token:
-            repo.token = "TOKEN"  # noqa: S105
+            obj.token = "TOKEN"  # noqa: S105
 
         match page:
             case "first-page":
@@ -65,14 +63,17 @@ class TestGitHubRepository(BaseTestRepository):
         else:
             headers = None
 
-        args = repo.get_next_page(endpoint=endpoint, response=response, headers=headers)
+        args = obj.get_next_page(endpoint=endpoint, response=response, headers=headers)
 
         match page:
             case "first-page":
-                if endpoint:
-                    assert args["url"] == "https://api.example.net/repos/foo/issues"
-                else:
-                    assert args["url"] == "https://api.example.net/repos/foo"
+                expected_base = "https://api.example.net"
+                optional_repo = (
+                    "/repos/foo" if issubclass(self.cls, github.GitHubRepository) else ""
+                )
+                optional_endpoint = "/an_endpoint" if endpoint else ""
+
+                assert args["url"] == f"{expected_base}{optional_repo}{optional_endpoint}"
             case "next-page":
                 if "missing-link" not in testcase:
                     assert args["url"] == "https://the.next/page"
@@ -91,6 +92,14 @@ class TestGitHubRepository(BaseTestRepository):
                 assert args["headers"]["the-header"] == "the-value"
             else:
                 assert "the-header" not in args["headers"]
+
+
+class TestGitHubInstance(GitHubTestBase, BaseTestInstance):
+    cls = github.GitHubInstance
+
+
+class TestGitHubRepository(GitHubTestBase, BaseTestRepository):
+    cls = github.GitHubRepository
 
     @pytest.mark.parametrize("status", ("closed", "blocked", "new", "assigned"))
     @pytest.mark.parametrize("label_type", (dict, str), ids=("labels-as-dict", "labels-as-str"))
@@ -111,7 +120,7 @@ class TestGitHubRepository(BaseTestRepository):
             "labels": labels,
         }
 
-        repo = self.create_repo()
+        repo = self.create_obj()
 
         issue = repo.normalize_issue(api_result)
 
@@ -129,7 +138,7 @@ class TestGitHubRepository(BaseTestRepository):
 
     @pytest.mark.parametrize("with_label", (True, False), ids=("with-label", "without-label"))
     def test_get_issue_params(self, with_label):
-        repo = self.create_repo(label="the-label" if with_label else None)
+        repo = self.create_obj(label="the-label" if with_label else None)
 
         params = repo.get_issue_params()
 

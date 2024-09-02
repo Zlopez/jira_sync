@@ -9,13 +9,10 @@ from typing import Any, ClassVar
 from requests import Response
 from requests.utils import parse_header_links
 
-from .base import Issue, IssueStatus, Repository
+from .base import APIBase, Instance, Issue, IssueStatus, Repository
 
 
-class GitHubRepository(Repository):
-    """Wrapper class around the GitHub REST API for a single repository."""
-
-    type = "github"
+class GitHubBase(APIBase):
     API_VERSION: ClassVar[str] = "2022-11-28"
 
     def get_next_page(
@@ -42,7 +39,7 @@ class GitHubRepository(Repository):
             else:
                 endpoint = ""
 
-            url = f"{self.instance_api_url}/repos/{self.repo}{endpoint}"
+            url = f"{self.get_base_url()}{endpoint}"
 
         _headers = {
             "Accept": "application/vnd.github+json",
@@ -58,6 +55,13 @@ class GitHubRepository(Repository):
         kwargs["headers"] = _headers
 
         return self.sanitize_requests_params(kwargs | {"url": url})
+
+
+class GitHubRepository(GitHubBase, Repository):
+    """Wrapper class around the GitHub REST API for a single repository."""
+
+    def get_base_url(self) -> str:
+        return self.instance.instance_api_url + f"/repos/{self.name}"
 
     def normalize_issue(self, api_result: dict[str, Any]) -> Issue:
         full_url = api_result["html_url"]
@@ -98,3 +102,10 @@ class GitHubRepository(Repository):
         if not self.label:
             return {}
         return {"params": {"labels": self.label}}
+
+
+class GitHubInstance(GitHubBase, Instance):
+    """Wrapper class around the GitHub REST API for the whole instance."""
+
+    type = "github"
+    repo_cls = GitHubRepository

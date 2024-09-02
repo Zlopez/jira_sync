@@ -80,7 +80,9 @@ class TestJIRA:
 
             jira_obj.jira.search_issues.return_value = issues
 
-        retval = jira_obj.get_issue_by_link(url=ISSUE_URL, repo="test", title="Foo")
+        retval = jira_obj.get_issue_by_link(
+            url=ISSUE_URL, instance="testinstance", repo="test", title="Foo"
+        )
 
         if dry_run:
             assert jira_obj.jira is None
@@ -92,9 +94,10 @@ class TestJIRA:
 
         snippets = [sn.strip() for sn in jql_str.split("AND")]
 
-        assert f"project = {jira_params['project']}" in snippets
+        jira_project = jira_params["project"]
+        assert f'project = "{jira_project}"' in snippets
         assert f'Description ~ "{ISSUE_URL}"' in snippets
-        assert 'labels = "test"' in snippets
+        assert 'labels IN ("testinstance:test", "test")' in snippets
 
         if issues_found:
             if not inexact:
@@ -104,7 +107,10 @@ class TestJIRA:
         else:
             assert retval is None
 
-    def test_get_open_issues_by_label(self, dry_run, jira_obj, jira_params):
+    @pytest.mark.parametrize(
+        "labels_as_string", (True, False), ids=("labels-as-string", "labels-as-list")
+    )
+    def test_get_open_issues_by_labels(self, labels_as_string, dry_run, jira_obj, jira_params):
         ISSUE_URL = "https://foo.bar/issue/1"
 
         if not dry_run:
@@ -112,7 +118,12 @@ class TestJIRA:
             issue.fields.description = f"{ISSUE_URL}\nSome\nmore\ntext."
             jira_obj.jira.search_issues.return_value = [issue]
 
-        retval = jira_obj.get_open_issues_by_label(label="label")
+        if labels_as_string:
+            labels = "labels"
+        else:
+            labels = ["labels"]
+
+        retval = jira_obj.get_open_issues_by_labels(labels=labels)
 
         if dry_run:
             assert jira_obj.jira is None
@@ -126,9 +137,10 @@ class TestJIRA:
 
         snippets = [sn.strip() for sn in jql_str.split("AND")]
 
-        assert f"project = {jira_params['project']}" in snippets
-        assert 'labels = "label"' in snippets
-        assert "status not in (Done, Closed)" in snippets
+        jira_project = jira_params["project"]
+        assert f'project = "{jira_project}"' in snippets
+        assert 'labels IN ("labels")' in snippets
+        assert 'status NOT IN ("Done", "Closed")' in snippets
 
     @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))
     def test_create_issue(self, success, dry_run, mocked_jira_pkg, jira_obj, jira_params):

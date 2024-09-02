@@ -1,3 +1,3 @@
-from .base import IssueStatus, Repository
-from .github import GitHubRepository
-from .pagure import PagureRepository
+from .base import Instance, IssueStatus, Repository
+from .github import GitHubInstance, GitHubRepository
+from .pagure import PagureInstance, PagureRepository
