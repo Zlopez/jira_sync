@@ -22,13 +22,15 @@ def cli(verbose: bool):
 
     :param verbose: Log verbosely, or not
     """
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    log.addHandler(ch)
     if verbose:
-        log.setLevel(logging.DEBUG)
+        level = logging.DEBUG
     else:
-        log.setLevel(logging.INFO)
+        level = logging.INFO
+
+    logging.basicConfig(
+        format="%(message)s",
+        level=level,
+    )
 
 
 @cli.command()
