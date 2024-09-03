@@ -28,16 +28,16 @@ def test_cli(verbose, runner):
 
     if verbose:
         cmd_args.insert(0, "--verbose")
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
 
-    with mock.patch.object(main, "log") as log:
+    with mock.patch.object(main.logging, "basicConfig") as basicConfig:
         result = runner.invoke(main.cli, cmd_args, catch_exceptions=False)
 
     assert result.exit_code == 0
 
-    if verbose:
-        log.setLevel.assert_called_once_with(logging.DEBUG)
-    else:
-        log.setLevel.assert_called_once_with(logging.INFO)
+    basicConfig.assert_called_once_with(format=mock.ANY, level=level)
 
 
 class HashableModel(BaseModel):
