@@ -327,9 +327,10 @@ def mock_requests_get(url, params=None, headers=None):
     parsed_query = dict(parse_qsl(parsed_url.query))
     params = parsed_query | params
 
-    pagination = {"per_page": 1, "page": 1} | {
-        name: int(value) for name, value in params.items() if name in ("per_page", "page")
-    }
+    # Always paginate only one item per page, ignore per_page settings
+    pagination = {"per_page": 1, "page": 1}
+    if "page" in params:
+        pagination["page"] = int(params["page"])
 
     # Pagure
     if (
@@ -348,7 +349,6 @@ def mock_requests_get(url, params=None, headers=None):
         ]
         results_len = len(results)
 
-        # Always paginate only one item per page
         result_item = pagination["per_page"] * pagination["page"] - 1
         if result_item < results_len - 1:
             next_page = f"{api_issues_url}?per_page=1&page={result_item + 2}"
@@ -395,7 +395,6 @@ def mock_requests_get(url, params=None, headers=None):
         ]
         results_len = len(results)
 
-        # Always paginate only one item per page
         result_item = pagination["per_page"] * pagination["page"] - 1
         if result_item < results_len - 1:
             next_page = f"{base_url}?per_page=1&page={result_item + 2}"
