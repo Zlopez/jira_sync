@@ -57,6 +57,7 @@ class BaseTestInstance:
         label=None,
         blocked_label="blocked",
         usermap=None,
+        query_repositories=(),
         repositories={},
     ):
         usermap = usermap or {}
@@ -69,6 +70,7 @@ class BaseTestInstance:
             label=label,
             blocked_label=blocked_label,
             usermap=usermap,
+            query_repositories=query_repositories,
             repositories=repositories,
         )
 

@@ -560,7 +560,11 @@ def test_sync_tickets(
         for repo in partly_wrapped_repos:
             repo.get_open_issues.assert_not_called()
         assert all(
-            m.startswith("Processing instance:") or m.startswith("Processing repository:")
+            m.startswith("Querying '")
+            and m.endswith("' for repositories")
+            or m.startswith("Discovered repositories on ")
+            or m.startswith("Processing instance:")
+            or m.startswith("Processing repository:")
             for m in caplog.messages
         )
         return

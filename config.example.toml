@@ -33,6 +33,12 @@ usermap = "fedora_jira_usermap.toml"  # External file, can be reused
 # fedora_user1 = "jira_user1"
 # fedora_user2 = "jira_user2"
 
+[[instances."pagure.io".query_repositories]]
+namespace = "fedora-infra"
+# Pattern only applies to the repository name
+# pattern = "*infra*"
+label = "test"
+
 [instances."pagure.io".repositories]
 "namespace/test1" = {}
 "test2" = {label = "test"}

@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from unittest import mock
 
 import pytest
@@ -6,7 +7,7 @@ import requests
 from jira_sync.repositories import pagure
 from jira_sync.repositories.base import Issue, IssueStatus
 
-from .test_base import BaseTestInstance, BaseTestRepository
+from .test_base import BaseTestInstance, BaseTestRepository, MockResponse
 
 
 class PagureTestBase:
@@ -78,6 +79,62 @@ class TestPagureInstance(PagureTestBase, BaseTestInstance):
             assert obj.instance_api_url == "INSTANCE_API_URL"
         else:
             assert obj.instance_api_url == "INSTANCE_URL/api/0"
+
+    @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))
+    def test_query_repositories(self, success, caplog):
+        instance = self.create_obj()
+        QUERY_PARAMS = {"namespace": "NAMESPACE", "pattern": "PATTERN"}
+        GET_NEXT_PARAMS = QUERY_PARAMS | {"fork": False, "short": True}
+        instance._query_repositories = [
+            QUERY_PARAMS | {"enabled": True, "label": "FOO"},
+            {"enabled": False},
+        ]
+
+        QUERIED_REPOS = ("foo", "bar", "baz")
+
+        API_RESPONSES = [
+            MockResponse(
+                status_code=requests.codes.ok,
+                json=mock.Mock(return_value={"projects": [{"fullname": f"/NAMESPACE/{repo}"}]}),
+            )
+            for repo in QUERIED_REPOS
+        ]
+
+        with (
+            mock.patch.object(instance, "get_next_page") as get_next_page,
+            mock.patch.object(pagure.requests, "get") as requests_get,
+            caplog.at_level("DEBUG"),
+        ):
+            get_next_page.side_effect = [
+                {"url": f"/projects?page={page}", "params": QUERY_PARAMS}
+                for page, _ in enumerate(QUERIED_REPOS, start=1)
+            ] + [None]
+            if success:
+                requests_get.side_effect = API_RESPONSES
+                expectation = nullcontext()
+            else:
+                requests_get.side_effect = [MockResponse(status_code=requests.codes.not_found)]
+                expectation = pytest.raises(requests.HTTPError)
+
+            with expectation:
+                repos = instance.query_repositories()
+
+        if success:
+            assert repos == {
+                f"/NAMESPACE/{repo}": {"enabled": True, "label": "FOO"} for repo in QUERIED_REPOS
+            }
+            assert get_next_page.call_args_list == [
+                mock.call(endpoint="projects", response=mock.ANY, params=GET_NEXT_PARAMS)
+            ] * (len(API_RESPONSES) + 1)
+            assert requests_get.call_args_list == [
+                mock.call(url=f"/projects?page={page}", params=QUERY_PARAMS)
+                for page, _ in enumerate(QUERIED_REPOS, start=1)
+            ]
+        else:
+            get_next_page.assert_called_once_with(
+                endpoint="projects", response=None, params=GET_NEXT_PARAMS
+            )
+            requests_get.assert_called_once_with(url="/projects?page=1", params=QUERY_PARAMS)
 
 
 class TestPagureRepository(PagureTestBase, BaseTestRepository):
