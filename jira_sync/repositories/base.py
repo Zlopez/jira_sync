@@ -149,11 +149,12 @@ class Repository(APIBase):
         :return: List of issues
         """
         kwargs = self.get_issue_params()
-        next_page = self.get_next_page(endpoint="issues", **kwargs)
 
         issues: list[Issue] = []
+        response = None
+        first_call = True
 
-        while next_page:
+        while next_page := self.get_next_page(endpoint="issues", response=response, **kwargs):
             response = requests.get(**next_page)
             if response.status_code == requests.codes.ok:
                 api_result = response.json()
@@ -165,7 +166,13 @@ class Repository(APIBase):
                     partial_issues = api_result
 
                 issues.extend(self.normalize_issue(issue) for issue in partial_issues)
-                next_page = self.get_next_page(endpoint="issues", response=response, **kwargs)
+            elif first_call and response.status_code == requests.codes.not_found:
+                # Pagure repos without issues enabled can’t be detected early, so we bow out
+                # gracefully here.
+                break
+            else:
+                response.raise_for_status()
+            first_call = False
 
         log.info("Retrieved %s open issues from %s:%s", len(issues), self.instance.name, self.name)
 
