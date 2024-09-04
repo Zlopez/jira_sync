@@ -3,6 +3,7 @@ API wrapper base for source code forges
 """
 
 import logging
+from collections.abc import Collection
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -203,6 +204,9 @@ class Instance(APIBase):
     usermap: dict[str, str]
     repositories: dict[str, "Repository"]
 
+    _query_repositories: Collection[dict[str, Any]]
+    _repositories: dict[str, Any]
+
     def __init_subclass__(cls) -> None:
         """Register subclasses by `type` key."""
         if cls.type in cls._types_subclasses:
@@ -220,6 +224,7 @@ class Instance(APIBase):
         label: str | None,
         blocked_label: str | None,
         usermap: dict[str, str],
+        query_repositories: Collection[dict[str, Any]],
         repositories: dict[str, dict[str, Any]],
         **kwargs,
     ) -> None:
@@ -251,9 +256,14 @@ class Instance(APIBase):
         self.blocked_label = blocked_label
 
         self.usermap = usermap
+        self._query_repositories = query_repositories or ()
+        self._repositories = repositories or {}
+        repo_specs: dict[str, dict[str, Any]] = (
+            self.query_repositories() if query_repositories else {}
+        ) | repositories
         self.repositories = {
             name: self.repo_cls(instance=self, name=name, **repo_spec)
-            for name, repo_spec in repositories.items()
+            for name, repo_spec in repo_specs.items()
         }
 
         super().__init__()
@@ -270,6 +280,14 @@ class Instance(APIBase):
         kwargs = config.model_dump()
         kwargs["name"] = name
         return cls._types_subclasses[config.type](config_path=config_path, **kwargs)
+
+    def query_repositories(self) -> dict[str, dict[str, Any]]:
+        """Query repositories in bulk from an instance.
+
+        :returns: The repository names/paths and their configurations on this
+            instance.
+        """
+        raise NotImplementedError
 
     def get_base_url(self) -> str:
         return self.instance_api_url or self.instance_url

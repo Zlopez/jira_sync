@@ -33,6 +33,15 @@ EXPECTED_CONFIG = {
             "instance_api_url": None,
             "instance_url": "https://pagure.io/",
             "label": None,
+            "query_repositories": [
+                {
+                    "blocked_label": None,
+                    "enabled": True,
+                    "label": "test",
+                    "namespace": "fedora-infra",
+                    "pattern": None,
+                },
+            ],
             "repositories": {
                 "namespace/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
                 "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},
@@ -47,6 +56,7 @@ EXPECTED_CONFIG = {
             "instance_api_url": "https://api.github.com/",
             "instance_url": "https://github.com/",
             "label": None,
+            "query_repositories": [],
             "repositories": {
                 "org/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
                 "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},
@@ -70,7 +80,7 @@ EXPECTED_CONFIG = {
     ),
 )
 @pytest.mark.parametrize("param_type", (str, Path))
-def test_main(usermap_type: str, config_source: str, param_type: type, tmp_path):
+def test_load_configuration(usermap_type: str, config_source: str, param_type: type, tmp_path):
     override = config_source == "repo"
     usermaps = {
         "pagure.io": {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"},

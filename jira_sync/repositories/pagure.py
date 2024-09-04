@@ -4,11 +4,14 @@ Module for communicating with pagure API.
 See https://pagure.io/api/0
 """
 
+import logging
 from typing import Any
 
 import requests
 
 from .base import APIBase, Instance, Issue, IssueStatus, Repository
+
+log = logging.getLogger(__name__)
 
 
 class PagureBase(APIBase):
@@ -97,3 +100,55 @@ class PagureInstance(PagureBase, Instance):
     @instance_api_url.setter
     def instance_api_url(self, value: str) -> None:
         self._instance_api_url = value
+
+    def query_repositories(self) -> dict[str, dict[str, Any]]:
+        """Query repositores in bulk from Pagure.
+
+        :returns: The repository names/paths and their configurations on this
+            instance.
+        """
+        repos: dict[str, dict[str, Any]] = {}
+
+        log.debug("Querying '%s' for repositories", self.name)
+
+        for spec in self._query_repositories:
+            log.debug("query spec: %s", spec)
+
+            if not spec["enabled"]:
+                continue
+
+            query_params = {
+                key: value
+                for key, value in spec.items()
+                if key in ("namespace", "pattern") and value is not None
+            } | {
+                "fork": False,
+                "short": True,
+            }
+
+            repo_params = {
+                key: value
+                for key, value in spec.items()
+                if key not in ("namespace", "pattern") and value is not None
+            }
+
+            response = None
+
+            while next_page := self.get_next_page(
+                endpoint="projects", response=response, params=query_params
+            ):
+                log.debug("next_page: %s", next_page)
+                response = requests.get(**next_page)
+                log.debug("response: %s", response)
+                if response.status_code == requests.codes.ok:
+                    api_result = response.json()
+                    repos |= {proj["fullname"]: repo_params for proj in api_result["projects"]}
+                else:
+                    response.raise_for_status()
+
+        # Ensure sorted iteration later
+        repos = {key: repos[key] for key in sorted(repos)}
+
+        log.info("Discovered repositories on %s: %s", self.name, ", ".join(repos))
+
+        return repos
