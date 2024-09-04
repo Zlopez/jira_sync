@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from itertools import chain
 from unittest import mock
 from weakref import ProxyType
@@ -10,6 +11,15 @@ from jira_sync.config import model
 from jira_sync.repositories import base
 
 TEST_API_RESULT = {"foo": {"bar": "baz"}}
+
+
+class MockResponse(mock.Mock):
+    def raise_for_status(self):
+        # Mimick requests.Response.raise_for_status()
+        if 400 <= self.status_code < 500:
+            raise requests.HTTPError(f"{self.status_code} Client Error: ...")
+        if 500 <= self.status_code < 600:
+            raise requests.HTTPError(f"{self.status_code} Server Error: ...")
 
 
 class TestAPIBase:
@@ -181,9 +191,22 @@ class TestRepository(BaseTestRepository):
         assert repo.bar == "BAR"
 
     @pytest.mark.parametrize(
+        "repo_has_issues, success",
+        (
+            (True, True),
+            (True, False),
+            (False, False),
+        ),
+        ids=(
+            "repo-has-issues-success",
+            "repo-has-issues-failure",
+            "repo-issues-not-found",
+        ),
+    )
+    @pytest.mark.parametrize(
         "needs_selector", (True, False), ids=("needs-selector", "doesnt-need-selector")
     )
-    def test_get_open_issues(self, needs_selector):
+    def test_get_open_issues(self, repo_has_issues, success, needs_selector):
         repo = self.create_obj()
 
         API_RESULT_PAGES = [[1, 2, 3], [4, 5, 6]]
@@ -192,14 +215,21 @@ class TestRepository(BaseTestRepository):
             repo._api_result_selectors = {"issues": "issues"}
             API_RESULT_PAGES = [{"issues": page} for page in API_RESULT_PAGES]
 
-        # [...status_code=...timeout)] + ... => simulate intermittent error on first result page
-        API_RESPONSES = [mock.Mock(status_code=requests.codes.timeout)] + [
-            mock.Mock(
-                status_code=requests.codes.ok,
-                json=mock.Mock(return_value=api_result_page),
-            )
-            for api_result_page in API_RESULT_PAGES
-        ]
+        expectation = nullcontext()
+        if success:
+            API_RESPONSES = [
+                MockResponse(
+                    status_code=requests.codes.ok,
+                    json=mock.Mock(return_value=api_result_page),
+                )
+                for api_result_page in API_RESULT_PAGES
+            ]
+        else:
+            if repo_has_issues:
+                API_RESPONSES = [MockResponse(status_code=requests.codes.forbidden)]
+                expectation = pytest.raises(requests.HTTPError)
+            else:
+                API_RESPONSES = [MockResponse(status_code=requests.codes.not_found)]
 
         with (
             mock.patch.object(repo, "get_issue_params") as get_issue_params,
@@ -208,24 +238,36 @@ class TestRepository(BaseTestRepository):
             mock.patch.object(requests, "get") as requests_get,
         ):
             get_issue_params.return_value = {}
-            get_next_page_retvals = [
-                {"url": f"https://api.example.net?page={i + 1}"}
-                for i in range(len(API_RESULT_PAGES))
-            ]
+            if repo_has_issues:
+                get_next_page_retvals = [
+                    {"url": f"https://api.example.net?page={i + 1}"}
+                    for i in range(len(API_RESULT_PAGES))
+                ]
+            else:
+                get_next_page_retvals = [{"url": "https://api.example.net?page=1"}]
             get_next_page.side_effect = get_next_page_retvals + [None]
             requests_get.side_effect = API_RESPONSES
             normalize_issue.side_effect = lambda x: x
 
-            issues = repo.get_open_issues()
+            with expectation:
+                issues = repo.get_open_issues()
 
-        if needs_selector:
-            assert issues == list(chain.from_iterable(res["issues"] for res in API_RESULT_PAGES))
+        # At least one attempt…
+        assert get_next_page.call_args_list[0] == mock.call(endpoint="issues", response=None)
+
+        if success:
+            if needs_selector:
+                assert issues == list(
+                    chain.from_iterable(res["issues"] for res in API_RESULT_PAGES)
+                )
+            else:
+                assert issues == list(chain.from_iterable(API_RESULT_PAGES))
+            get_issue_params.assert_called_once_with()
+            for response in API_RESPONSES:
+                get_next_page.assert_any_call(endpoint="issues", response=response)
+            assert requests_get.call_args_list == [
+                mock.call(**kwargs) for kwargs in get_next_page_retvals
+            ]
         else:
-            assert issues == list(chain.from_iterable(API_RESULT_PAGES))
-        get_issue_params.assert_called_once_with()
-        assert get_next_page.call_args_list[0] == mock.call(endpoint="issues")
-        for response in API_RESPONSES[1:]:  # First request failed…
-            get_next_page.assert_any_call(endpoint="issues", response=response)
-        assert requests_get.call_args_list == [mock.call(**get_next_page_retvals[0])] + [
-            mock.call(**kwargs) for kwargs in get_next_page_retvals
-        ]
+            get_next_page.assert_called_once()
+            get_issue_params.assert_called_once_with()
