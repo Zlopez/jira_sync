@@ -72,9 +72,21 @@ class PagureConfig(InstanceConfigBase):
     query_repositories: list[PagureQueryRepoSpec] = []
 
 
+class GitHubQueryRepoSpecOrg(QueryRepoSpec):
+    org: str
+
+
+class GitHubQueryRepoSpecUser(QueryRepoSpec):
+    user: str
+
+
+GitHubQueryRepoSpec = GitHubQueryRepoSpecOrg | GitHubQueryRepoSpecUser
+
+
 class GitHubConfig(InstanceConfigBase):
     type: Literal["github"]
     instance_api_url: HttpUrl
+    query_repositories: list[GitHubQueryRepoSpec] = []
 
 
 InstanceConfig = PagureConfig | GitHubConfig

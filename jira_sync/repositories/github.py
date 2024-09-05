@@ -4,12 +4,15 @@ Module for communicating with the GitHub REST API.
 See https://docs.github.com/en/rest?apiVersion=2022-11-28
 """
 
+import logging
 from typing import Any, ClassVar
 
-from requests import Response
+import requests
 from requests.utils import parse_header_links
 
 from .base import APIBase, Instance, Issue, IssueStatus, Repository
+
+log = logging.getLogger(__name__)
 
 
 class GitHubBase(APIBase):
@@ -19,7 +22,7 @@ class GitHubBase(APIBase):
         self,
         *,
         endpoint: str | None = None,
-        response: Response | None = None,
+        response: requests.Response | None = None,
         headers: dict[str, str] | None = None,
         params: dict[str, str] | None = None,
         **kwargs,
@@ -117,3 +120,52 @@ class GitHubInstance(GitHubBase, Instance):
 
     type = "github"
     repo_cls = GitHubRepository
+
+    def query_repositories(self) -> dict[str, dict[str, Any]]:
+        """Query repositores in bulk from GitHub.
+
+        :returns: The repository names/paths and their configurations on this
+            instance.
+        """
+        repos: dict[str, dict[str, Any]] = {}
+
+        log.info("Querying '%s' for repositories", self.name)
+
+        for spec in self._query_repositories:
+            log.debug("query spec: %s", spec)
+
+            if not spec["enabled"]:
+                continue
+
+            query_params = {key: value for key, value in spec.items() if key in ("org", "user")}
+
+            repo_params = {
+                key: value
+                for key, value in spec.items()
+                if key not in ("org", "user") and value is not None
+            }
+
+            match query_params:
+                case {"org": org}:
+                    endpoint = f"/orgs/{org}/repos"
+                case {"user": user}:  # pragma: no branch
+                    endpoint = f"/users/{user}/repos"
+
+            response = None
+
+            while next_page := self.get_next_page(endpoint=endpoint, response=response):
+                response = requests.get(**next_page)
+                if response.status_code == requests.codes.ok:
+                    api_result = response.json()
+                    repos |= {
+                        repo["full_name"]: repo_params for repo in api_result if repo["has_issues"]
+                    }
+                else:
+                    response.raise_for_status()
+
+        # Ensure sorted iteration later
+        repos = {key: repos[key] for key in sorted(repos)}
+
+        log.info("Discovered repositories on %s: %s", self.name, ", ".join(repos))
+
+        return repos

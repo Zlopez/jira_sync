@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+from itertools import chain, repeat
 from unittest import mock
 
 import pytest
@@ -6,7 +8,7 @@ import requests
 from jira_sync.repositories import github
 from jira_sync.repositories.base import Issue, IssueStatus
 
-from .test_base import BaseTestInstance, BaseTestRepository
+from .test_base import BaseTestInstance, BaseTestRepository, MockResponse
 
 
 class GitHubTestBase:
@@ -96,6 +98,68 @@ class GitHubTestBase:
 
 class TestGitHubInstance(GitHubTestBase, BaseTestInstance):
     cls = github.GitHubInstance
+
+    @pytest.mark.parametrize("key", ("org", "user"))
+    @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))
+    def test_query_repositories(self, key, success):
+        instance = self.create_obj()
+        QUERY_PARAMS = {key: key.upper()}
+        instance._query_repositories = [
+            QUERY_PARAMS | {"enabled": True, "label": "FOO"},
+            {"enabled": False},
+        ]
+
+        QUERIED_REPOS_WITH_ISSUES = ("foo", "bar", "baz")
+        QUERIED_REPOS_WITHOUT_ISSUES = ("sna", "fu")
+        QUERIED_REPOS = QUERIED_REPOS_WITH_ISSUES + QUERIED_REPOS_WITHOUT_ISSUES
+
+        API_RESPONSES = [
+            MockResponse(
+                status_code=requests.codes.ok,
+                json=mock.Mock(
+                    return_value=[{"full_name": f"/{key.upper()}/{repo}", "has_issues": has_issues}]
+                ),
+            )
+            for repo, has_issues in chain(
+                zip(QUERIED_REPOS_WITH_ISSUES, repeat(True)),
+                zip(QUERIED_REPOS_WITHOUT_ISSUES, repeat(False)),
+            )
+        ]
+
+        endpoint = f"/{key}s/{key.upper()}/repos"
+
+        with (
+            mock.patch.object(instance, "get_next_page") as get_next_page,
+            mock.patch.object(github.requests, "get") as requests_get,
+        ):
+            get_next_page.side_effect = [
+                {"url": f"{endpoint}?page={page}"} for page, _ in enumerate(QUERIED_REPOS, start=1)
+            ] + [None]
+            if success:
+                requests_get.side_effect = API_RESPONSES
+                expectation = nullcontext()
+            else:
+                requests_get.side_effect = [MockResponse(status_code=requests.codes.not_found)]
+                expectation = pytest.raises(requests.HTTPError)
+
+            with expectation:
+                repos = instance.query_repositories()
+
+        if success:
+            assert repos == {
+                f"/{key.upper()}/{repo}": {"enabled": True, "label": "FOO"}
+                for repo in QUERIED_REPOS_WITH_ISSUES
+            }
+            assert get_next_page.call_args_list == [
+                mock.call(endpoint=f"{endpoint}", response=mock.ANY)
+            ] * (len(API_RESPONSES) + 1)
+            assert requests_get.call_args_list == [
+                mock.call(url=f"{endpoint}?page={page}")
+                for page, _ in enumerate(QUERIED_REPOS, start=1)
+            ]
+        else:
+            get_next_page.assert_called_once_with(endpoint=endpoint, response=None)
+            requests_get.assert_called_once_with(url=f"{endpoint}?page=1")
 
 
 class TestGitHubRepository(GitHubTestBase, BaseTestRepository):
