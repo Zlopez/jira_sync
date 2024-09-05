@@ -56,7 +56,14 @@ EXPECTED_CONFIG = {
             "instance_api_url": "https://api.github.com/",
             "instance_url": "https://github.com/",
             "label": None,
-            "query_repositories": [],
+            "query_repositories": [
+                {
+                    "blocked_label": None,
+                    "enabled": True,
+                    "label": "test",
+                    "org": "fedora-infra",
+                },
+            ],
             "repositories": {
                 "org/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
                 "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},

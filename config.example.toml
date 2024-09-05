@@ -54,6 +54,10 @@ blocked_label = "blocked"
 github_user1 = "jira_user1"
 github_user2 = "jira_user2"
 
+[[instances."github.com".query_repositories]]
+org = "fedora-infra"
+label = "test"
+
 [instances."github.com".repositories]
 "org/test1" = {}
 "test2" = {label = "test"}
