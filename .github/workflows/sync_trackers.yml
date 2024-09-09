@@ -16,10 +16,13 @@ jobs:
     - name: Prepare config
       env:
         JIRA_TOKEN: ${{ secrets.jira_token }}
+        GITHUBCOM_TOKEN: ${{ secrets.githubcom_token }}
       run: |
         cp .github/workflows/workflow_config.toml config.toml
         sed -i -e "s|\$secrets.jira_token|$JIRA_TOKEN|g" config.toml
         cp .github/workflows/pagureio_jira_usermap.toml pagureio_jira_usermap.toml
+        sed -i -e "s|\$secrets.githubcom_token|$GITHUBCOM_TOKEN|g" config.toml
+        cp .github/workflows/githubcom_jira_usermap.toml githubcom_jira_usermap.toml
 
     - name: Run the script
       run: |
