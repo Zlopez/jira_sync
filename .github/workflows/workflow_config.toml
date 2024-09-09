@@ -25,8 +25,12 @@ closed = "Done"
 type = "pagure"
 enabled = true  # Enable/Disable Pagure instance
 instance_url = "https://pagure.io/"  # URL for pagure endpoint
+label = "cpe"  # Label marking issues to by synchronized
 blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
+
+[[instances."pagure.io".query_repositories]]
+namespace = "fedora-infra"
 
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
@@ -34,4 +38,21 @@ usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
 "fedora-infrastructure" = {}
 "releng" = {}
 "centos-infra" = {}
-"fedora-infra/toddlers" = {label = "cpe"}
+"fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
+
+# GitHub configuration
+[instances."github.com"]
+type = "github"
+enabled = true
+instance_url = "https://github.com"
+instance_api_url = "https://api.github.com"
+token = "$secrets.githubcom_token"
+label = "cpe"
+blocked_label = "blocked"
+usermap = "githubcom_jira_usermap.toml"
+
+[[instances."github.com".query_repositories]]
+org = "fedora-infra"
+
+[[instances."github.com".query_repositories]]
+org = "CentOS"
