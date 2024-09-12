@@ -122,7 +122,7 @@ def sync_tickets(config_file: str, dry_run: bool):
 
             all_repo_issues |= set(repo_issues)
 
-            log.info("%s pagure issues matched jira issues", len(jira_issues_matched))
+            log.info("%s %s issues matched jira issues", len(jira_issues_matched), repo.name)
 
     jira_issues_to_close = all_jira_issues - jira_issues_matched - jira_issues_dubious
 
