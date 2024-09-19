@@ -162,3 +162,5 @@ cython_debug/
 # Project specific
 # Ignore any local configuration file
 config.toml
+pagureio_jira_usermap.toml
+githubcom_jira_usermap.toml
