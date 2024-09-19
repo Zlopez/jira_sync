@@ -145,7 +145,8 @@ class JIRA:
         }
         try:
             return self.jira.create_issue(fields=issue_dict)
-        except jira.exceptions.JIRAError:
+        except jira.exceptions.JIRAError as e:
+            log.warning("Can’t create issue: %s", e)
             return None
 
     def _get_issue_transition_statuses(self, issue: Issue) -> dict[str, str]:
