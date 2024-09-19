@@ -143,7 +143,7 @@ class TestJIRA:
         assert 'status NOT IN ("Done", "Closed")' in snippets
 
     @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))
-    def test_create_issue(self, success, dry_run, mocked_jira_pkg, jira_obj, jira_params):
+    def test_create_issue(self, success, dry_run, mocked_jira_pkg, jira_obj, jira_params, caplog):
         if not dry_run:
             if success:
                 issue_sentinel = object()
@@ -152,9 +152,10 @@ class TestJIRA:
                 mocked_jira_pkg.exceptions.JIRAError = RuntimeError
                 jira_obj.jira.create_issue.side_effect = RuntimeError("BOO")
 
-        retval = jira_obj.create_issue(
-            summary="summary", description="description", url="url", label="label"
-        )
+        with caplog.at_level("DEBUG"):
+            retval = jira_obj.create_issue(
+                summary="summary", description="description", url="url", label="label"
+            )
 
         if dry_run:
             assert jira_obj.jira is None
@@ -163,8 +164,10 @@ class TestJIRA:
 
         if success:
             assert retval == issue_sentinel
+            assert str(RuntimeError("BOO")) not in caplog.text
         else:
             assert retval is None
+            assert str(RuntimeError("BOO")) in caplog.text
 
     @pytest.mark.parametrize("cold_cache", (True, False), ids=("cold-cache", "hot-cache"))
     def test__get_issue_transition_statuses(self, cold_cache, dry_run, jira_obj):
