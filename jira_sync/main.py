@@ -56,6 +56,7 @@ def sync_tickets(config_file: str, dry_run: bool):
     )
 
     statuses = jira_config.statuses
+    status_values = list(statuses.model_dump().values())
 
     all_jira_issues = set()
     # This will be filled with JIRA issues that were matched with
@@ -169,9 +170,9 @@ def sync_tickets(config_file: str, dry_run: bool):
             # Only move to new state from status we know
             if not (
                 repo_issue.status == IssueStatus.new
-                and jira_issue.fields.status.name not in statuses
+                and jira_issue.fields.status.name not in status_values
             ):
-                log.debug(
+                log.info(
                     "Transition issue %s from %s to %s",
                     jira_issue.key,
                     jira_issue.fields.status.name,
@@ -180,7 +181,7 @@ def sync_tickets(config_file: str, dry_run: bool):
                 jira.transition_issue(jira_issue, jira_status)
                 jira.add_label(jira_issue, jira_config.label)
             else:
-                log.debug(
+                log.info(
                     "Not transitioning issue %s from %s to %s",
                     jira_issue.key,
                     jira_issue.fields.status.name,
