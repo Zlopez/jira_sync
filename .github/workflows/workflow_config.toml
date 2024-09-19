@@ -25,12 +25,12 @@ closed = "Done"
 type = "pagure"
 enabled = true  # Enable/Disable Pagure instance
 instance_url = "https://pagure.io/"  # URL for pagure endpoint
-label = "cpe"  # Label marking issues to by synchronized
 blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"
+label = "cpe"  # Label marking issues to by synchronized
 
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
