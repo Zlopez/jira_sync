@@ -48,12 +48,7 @@ def sync_tickets(config_file: str, dry_run: bool):
     config = load_configuration(config_file)
     jira_config = config.general.jira
 
-    jira = JIRA(
-        url=str(jira_config.instance_url) if not dry_run else None,
-        token=jira_config.token if not dry_run else None,
-        project=jira_config.project,
-        issue_type=jira_config.default_issue_type,
-    )
+    jira = JIRA(jira_config, dry_run=dry_run)
 
     statuses = jira_config.statuses
     status_values = list(statuses.model_dump().values())

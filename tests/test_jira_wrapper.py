@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 
 from jira_sync import jira_wrapper
+from jira_sync.config.model import JiraConfig
 
 
 def pytest_generate_tests(metafunc):
@@ -16,14 +17,29 @@ def dry_run(request):
     return request.param
 
 
+TEST_JIRA_CONFIG = {
+    "instance_url": "https://jira.example.com",
+    "project": "Project",
+    "token": "TOKEN",
+    "default_issue_type": "Story",
+    "label": "label",
+    "statuses": {
+        "new": "NEW",
+        "assigned": "IN_PROGRESS",
+        "blocked": "BLOCKED",
+        "closed": "DONE",
+    },
+}
+
+
+@pytest.fixture(scope="session")
+def jira_config() -> JiraConfig:
+    return JiraConfig.model_validate(TEST_JIRA_CONFIG)
+
+
 @pytest.fixture
-def jira_params(dry_run) -> dict[str, str | object]:
-    return {
-        "url": "https://jira.example.com" if not dry_run else None,
-        "token": object() if not dry_run else None,  # a sentinel
-        "project": "project",
-        "issue_type": "towel",
-    }
+def jira_params(jira_config, dry_run) -> dict[str, str | object]:
+    return {"jira_config": jira_config, "dry_run": dry_run}
 
 
 @pytest.fixture
@@ -43,22 +59,21 @@ class TestJIRA:
         "NEWSTATUS": "abc345",
     }
 
-    def test___init__(self, dry_run, jira_obj, jira_params, mocked_jira_pkg):
+    def test___init__(self, dry_run, jira_obj, jira_config, mocked_jira_pkg):
         if dry_run:
             mocked_jira_pkg.client.JIRA.assert_not_called()
             assert jira_obj.jira is None
         else:
             mocked_jira_pkg.client.JIRA.assert_called_with(
-                jira_params["url"], token_auth=jira_params["token"]
+                str(jira_config.instance_url), token_auth=jira_config.token
             )
             assert jira_obj.jira == mocked_jira_pkg.client.JIRA.return_value
-        assert jira_obj.project == jira_params["project"]
-        assert jira_obj.issue_type == jira_params["issue_type"]
+        assert jira_obj.jira_config == jira_config
 
     @pytest.mark.parametrize(
         "testcase", ("issues-found", "issues-found-inexact", "issues-not-found")
     )
-    def test_get_issue_by_link(self, testcase, dry_run, jira_obj, jira_params):
+    def test_get_issue_by_link(self, testcase, dry_run, jira_obj, jira_config):
         issues_found = "issues-found" in testcase
         inexact = "inexact" in testcase
 
@@ -94,8 +109,7 @@ class TestJIRA:
 
         snippets = [sn.strip() for sn in jql_str.split("AND")]
 
-        jira_project = jira_params["project"]
-        assert f'project = "{jira_project}"' in snippets
+        assert f'project = "{jira_config.project}"' in snippets
         assert f'Description ~ "{ISSUE_URL}"' in snippets
         assert 'labels IN ("testinstance:test", "test")' in snippets
 
@@ -110,7 +124,7 @@ class TestJIRA:
     @pytest.mark.parametrize(
         "labels_as_string", (True, False), ids=("labels-as-string", "labels-as-list")
     )
-    def test_get_open_issues_by_labels(self, labels_as_string, dry_run, jira_obj, jira_params):
+    def test_get_open_issues_by_labels(self, labels_as_string, dry_run, jira_obj, jira_config):
         ISSUE_URL = "https://foo.bar/issue/1"
 
         if not dry_run:
@@ -137,8 +151,7 @@ class TestJIRA:
 
         snippets = [sn.strip() for sn in jql_str.split("AND")]
 
-        jira_project = jira_params["project"]
-        assert f'project = "{jira_project}"' in snippets
+        assert f'project = "{jira_config.project}"' in snippets
         assert 'labels IN ("labels")' in snippets
         assert 'status NOT IN ("Done", "Closed")' in snippets
 
