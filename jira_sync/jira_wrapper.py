@@ -12,6 +12,8 @@ import jira
 # Help out mypy, it trips over directly using jira.resources.Issue.
 from jira import Issue
 
+from .config.model import JiraConfig
+
 log = logging.getLogger(__name__)
 
 
@@ -19,42 +21,33 @@ class JIRA:
     """
     Class for interacting with the JIRA API.
 
+    :attribute jira_config: Configuration of the JIRA instance
     :attribute jira: Instance of the jira.JIRA object
-    :attribute project: Project to work with
-    :attribute issue_type: Default issue type for creating issues
     :attribute project_statuses: List of statuses on the project in the format
                                  {"status": "id"}.
                                  Example: {"NEW": "1"}
     """
 
+    jira_config: JiraConfig
     jira: jira.client.JIRA | None
-    project: str
-    issue_type: str
     project_statuses: dict[Issue, dict[str, str]]
 
-    def __init__(
-        self,
-        url: str | None,
-        token: str | None,
-        project: str,
-        issue_type: str,
-    ):
+    def __init__(self, jira_config: JiraConfig, dry_run: bool = False):
         """
         Initialize the JIRA object.
 
-        Set url and token to None for dry-run (simulated) operation.
-
-        :param url: URL to JIRA server
-        :param token: Token to use for authentication
-        :param project: Project to work with
-        :param issue_type: Default issue type for creating issues
+        :param jira_config: The configuration describing the JIRA instance
+        :param dry_run: Whether to connect to the JIRA instance or not
         """
-        if url and token:
-            self.jira = jira.client.JIRA(url, token_auth=token)
-        else:
+        self.jira_config = jira_config
+
+        if dry_run:
             self.jira = None
-        self.project = project
-        self.issue_type = issue_type
+        else:
+            self.jira = jira.client.JIRA(
+                str(jira_config.instance_url), token_auth=jira_config.token
+            )
+
         self.project_statuses = {}
 
     def get_issue_by_link(self, *, url: str, instance: str, repo: str, title: str) -> Issue | None:
@@ -78,7 +71,7 @@ class JIRA:
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
-                f'project = "{self.project}" AND Description ~ "{url}"'
+                f'project = "{self.jira_config.project}" AND Description ~ "{url}"'
                 + f' AND labels IN ("{instance}:{repo}", "{repo}")'
             ),
         )
@@ -113,7 +106,7 @@ class JIRA:
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
-                f'project = "{self.project}" AND labels IN ({labels_str})'
+                f'project = "{self.jira_config.project}" AND labels IN ({labels_str})'
                 + ' AND status NOT IN ("Done", "Closed")',
                 maxResults=0,
             ),
@@ -137,10 +130,10 @@ class JIRA:
             return None
 
         issue_dict = {
-            "project": {"key": self.project},
+            "project": {"key": self.jira_config.project},
             "summary": summary,
             "description": url + "\n\n" + description,
-            "issuetype": {"name": self.issue_type},
+            "issuetype": {"name": self.jira_config.default_issue_type},
             "labels": [label] if label else [],
         }
         try:
