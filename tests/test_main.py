@@ -8,9 +8,10 @@ import pytest
 import requests
 import tomlkit
 from click.testing import CliRunner
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 from jira_sync import main, repositories
+from jira_sync.config.model import JiraConfig
 
 
 @pytest.fixture
@@ -288,7 +289,7 @@ def _jira__get_open_issues_by_labels(labels: str | Sequence[str]):
     return [issue for issue in TEST_JIRA_ISSUES if any(label in issue.labels for label in labels)]
 
 
-def _jira__get_issue_by_link(*, url: str, instance: str, repo: str, title: str):
+def _jira__get_issue_by_link(*, url: str, instance: str, repo: str):
     candidates = [
         issue
         for issue in TEST_JIRA_ISSUES
@@ -547,12 +548,7 @@ def test_sync_tickets(
 
     assert result.exit_code == 0
 
-    JIRA.assert_called_once_with(
-        url=str(HttpUrl(jira_config["instance_url"])),
-        token=jira_config["token"],
-        project=jira_config["project"],
-        issue_type=jira_config["default_issue_type"],
-    )
+    JIRA.assert_called_once_with(JiraConfig.model_validate(jira_config), dry_run=False)
 
     if not (instances_enabled and repositories_enabled):
         # Nothing should have happened.
