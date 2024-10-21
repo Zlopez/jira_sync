@@ -111,18 +111,29 @@ class TestGitHubInstance(GitHubTestBase, BaseTestInstance):
 
         QUERIED_REPOS_WITH_ISSUES = ("foo", "bar", "baz")
         QUERIED_REPOS_WITHOUT_ISSUES = ("sna", "fu")
-        QUERIED_REPOS = QUERIED_REPOS_WITH_ISSUES + QUERIED_REPOS_WITHOUT_ISSUES
+        QUERIED_REPOS_ARCHIVED = ("fedmod",)
+        QUERIED_REPOS = (
+            QUERIED_REPOS_WITH_ISSUES + QUERIED_REPOS_WITHOUT_ISSUES + QUERIED_REPOS_ARCHIVED
+        )
 
         API_RESPONSES = [
             MockResponse(
                 status_code=requests.codes.ok,
                 json=mock.Mock(
-                    return_value=[{"full_name": f"/{key.upper()}/{repo}", "has_issues": has_issues}]
+                    return_value=[
+                        {
+                            "full_name": f"/{key.upper()}/{repo}",
+                            "has_issues": has_issues,
+                            "archived": archived,
+                            "disabled": False,
+                        }
+                    ]
                 ),
             )
-            for repo, has_issues in chain(
-                zip(QUERIED_REPOS_WITH_ISSUES, repeat(True)),
-                zip(QUERIED_REPOS_WITHOUT_ISSUES, repeat(False)),
+            for repo, has_issues, archived in chain(
+                zip(QUERIED_REPOS_WITH_ISSUES, repeat(True), repeat(False)),
+                zip(QUERIED_REPOS_WITHOUT_ISSUES, repeat(False), repeat(False)),
+                zip(QUERIED_REPOS_ARCHIVED, repeat(True), repeat(True)),
             )
         ]
 
