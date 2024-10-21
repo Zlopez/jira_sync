@@ -158,7 +158,9 @@ class GitHubInstance(GitHubBase, Instance):
                 if response.status_code == requests.codes.ok:
                     api_result = response.json()
                     repos |= {
-                        repo["full_name"]: repo_params for repo in api_result if repo["has_issues"]
+                        repo["full_name"]: repo_params
+                        for repo in api_result
+                        if repo["has_issues"] and not repo["disabled"] and not repo["archived"]
                     }
                 else:
                     response.raise_for_status()
