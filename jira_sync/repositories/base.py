@@ -30,7 +30,7 @@ class IssueStatus(Enum):
 class Issue:
     """Metadata of issues in repositories.
 
-    This is a generic “lowest common denominator” represenation of issue
+    This is a generic “lowest common denominator” representation of issue
     metadata in remote repositories.
     """
 
