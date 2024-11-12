@@ -284,10 +284,15 @@ TEST_GITHUB_JIRA_ISSUES = [
 TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES
 
 
-def _jira__get_open_issues_by_labels(labels: str | Collection[str]):
+def _jira__get_issues_by_labels(labels: str | Collection[str], closed=False):
     if isinstance(labels, str):
         labels = [labels]
-    return [issue for issue in TEST_JIRA_ISSUES if any(label in issue.labels for label in labels)]
+    return [
+        issue
+        for issue in TEST_JIRA_ISSUES
+        if any(label in issue.labels for label in labels)
+        and (issue.fields.status.name == "DONE") == closed
+    ]
 
 
 def _jira__get_issue_by_link(*, url: str, instance: str, repo: str):
@@ -537,9 +542,7 @@ def test_sync_tickets(
         caplog.at_level("DEBUG"),
     ):
         JIRA.return_value = jira = mock.Mock()
-        jira.get_open_issues_by_labels.side_effect = mock.Mock(
-            wraps=_jira__get_open_issues_by_labels
-        )
+        jira.get_issues_by_labels.side_effect = mock.Mock(wraps=_jira__get_issues_by_labels)
         jira.get_issue_by_link.side_effect = mock.Mock(wraps=_jira__get_issue_by_link)
         if creation_fails:
             jira.create_issue.return_value = None
@@ -577,7 +580,7 @@ def test_sync_tickets(
 
     assert all(
         mock.call((f"{instance_name}:{repo_name}", repo_name))
-        in jira.get_open_issues_by_labels.call_args_list
+        in jira.get_issues_by_labels.call_args_list
         for instance_name, instance_repos in (
             ("pagure.io", TEST_PAGURE_REPOS),
             ("github.com", TEST_GITHUB_REPOS),

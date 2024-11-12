@@ -101,9 +101,7 @@ def sync_tickets(config_file: str, run_mode: JiraRunMode):
             if not repo.enabled:
                 continue
 
-            jira_issues = jira.get_open_issues_by_labels(
-                (f"{instance_name}:{repo_name}", repo_name)
-            )
+            jira_issues = jira.get_issues_by_labels((f"{instance_name}:{repo_name}", repo_name))
             all_jira_issues |= set(jira_issues)
             log.info(
                 "Retrieved %s issues from jira for '%s' repository: %s",

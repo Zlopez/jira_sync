@@ -133,10 +133,11 @@ class TestJIRA:
         else:
             assert retval is None
 
+    @pytest.mark.parametrize("closed", (False, True), ids=("open", "closed"))
     @pytest.mark.parametrize(
         "labels_as_string", (True, False), ids=("labels-as-string", "labels-as-list")
     )
-    def test_get_open_issues_by_labels(self, labels_as_string, run_mode, jira_obj, jira_config):
+    def test_get_issues_by_labels(self, closed, labels_as_string, run_mode, jira_obj, jira_config):
         ISSUE_URL = "https://foo.bar/issue/1"
 
         if run_mode != JiraRunMode.DRY_RUN:
@@ -149,7 +150,7 @@ class TestJIRA:
         else:
             labels = ["labels"]
 
-        retval = jira_obj.get_open_issues_by_labels(labels=labels)
+        retval = jira_obj.get_issues_by_labels(labels=labels, closed=closed)
 
         if run_mode == JiraRunMode.DRY_RUN:
             assert jira_obj._jira is None
@@ -165,7 +166,10 @@ class TestJIRA:
 
         assert f'project = "{jira_config.project}"' in snippets
         assert 'labels IN ("labels")' in snippets
-        assert 'status NOT IN ("Done", "Closed")' in snippets
+        if closed:
+            assert 'status IN ("Done", "Closed")' in snippets
+        else:
+            assert 'status NOT IN ("Done", "Closed")' in snippets
 
     @pytest.mark.parametrize(
         "test_case", ("success-labels-as-str", "success-labels-as-collection", "failure")
