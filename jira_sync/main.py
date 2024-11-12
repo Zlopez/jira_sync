@@ -8,7 +8,7 @@ from dataclasses import replace
 import click
 
 from .config import load_configuration
-from .jira_wrapper import JIRA
+from .jira_wrapper import JIRA, JiraRunMode
 from .repositories import Instance, IssueStatus
 
 log = logging.getLogger(__name__)
@@ -37,18 +37,42 @@ def cli(verbose: bool):
 @click.option(
     "--config-file", "--config", default="config.toml", help="Path to configuration file."
 )
-@click.option("--dry-run", "-n", is_flag=True, default=False, help="Don’t change anything.")
-def sync_tickets(config_file: str, dry_run: bool):
+@click.option(
+    "--read-write",
+    "-w",
+    "run_mode",
+    type=JiraRunMode,
+    flag_value=JiraRunMode.READ_WRITE,
+    default=True,
+    help="Read data from JIRA and make changes.",
+)
+@click.option(
+    "--read-only",
+    "-r",
+    "run_mode",
+    type=JiraRunMode,
+    flag_value=JiraRunMode.READ_ONLY,
+    help="Read data from JIRA but don’t attempt to make changes.",
+)
+@click.option(
+    "--dry-run",
+    "-n",
+    "run_mode",
+    type=JiraRunMode,
+    flag_value=JiraRunMode.DRY_RUN,
+    help="Don’t change anything.",
+)
+def sync_tickets(config_file: str, run_mode: JiraRunMode):
     """
     Sync the ticket from sources provided in configuration file.
 
     :param config: Path to configuration file
-    :param dry_run: Don’t do anything
+    :param run_mode: How JIRA is supposed to be accessed
     """
     config = load_configuration(config_file)
     jira_config = config.general.jira
 
-    jira = JIRA(jira_config, dry_run=dry_run)
+    jira = JIRA(jira_config, run_mode=run_mode)
 
     statuses = jira_config.statuses
     status_values = list(statuses.model_dump().values())

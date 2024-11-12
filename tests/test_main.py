@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from jira_sync import main, repositories
 from jira_sync.config.model import JiraConfig
+from jira_sync.jira_wrapper import JiraRunMode
 
 
 @pytest.fixture
@@ -553,7 +554,9 @@ def test_sync_tickets(
 
     assert result.exit_code == 0
 
-    JIRA.assert_called_once_with(JiraConfig.model_validate(jira_config), dry_run=False)
+    JIRA.assert_called_once_with(
+        JiraConfig.model_validate(jira_config), run_mode=JiraRunMode.READ_WRITE
+    )
 
     if not (instances_enabled and repositories_enabled):
         # Nothing should have happened.
