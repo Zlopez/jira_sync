@@ -50,23 +50,18 @@ class JIRA:
 
         self.project_statuses = {}
 
-    def get_issue_by_link(self, *, url: str, instance: str, repo: str, title: str) -> Issue | None:
+    def get_issue_by_link(self, *, url: str, instance: str, repo: str) -> Issue | None:
         """
         Retrieve the issue with its external issue URL set to url.
 
         :param url: URL to search for
         :param instance: Instance name
         :param repo: Project namespace/name
-        :param title: Title of the ticket
 
         :return: Retrieved issue or None
         """
         if not self.jira:
             return None
-
-        # Replace special characters
-        title = title.replace("[", "\\\\[")
-        title = title.replace("]", "\\\\]")
 
         issues = cast(
             jira.client.ResultList[Issue],
