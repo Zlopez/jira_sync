@@ -101,11 +101,14 @@ class JIRA:
 
         return issues[0]
 
-    def get_open_issues_by_labels(self, labels: str | Collection[str]) -> list[Issue]:
+    def get_issues_by_labels(
+        self, labels: str | Collection[str], closed: bool = False
+    ) -> list[Issue]:
         """
-        Retrieve open issues for the specified label.
+        Retrieve issues for the specified labels.
 
         :param labels: Labels to retrieve the issues by
+        :param closed: Whether to return closed issues
 
         :return: List of issues
         """
@@ -118,11 +121,16 @@ class JIRA:
 
         labels_str = ", ".join(f'"{label}"' for label in labels)
 
+        if closed:
+            status_blurb = 'status IN ("Done", "Closed")'
+        else:
+            status_blurb = 'status NOT IN ("Done", "Closed")'
+
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
                 f'project = "{self.jira_config.project}" AND labels IN ({labels_str})'
-                + ' AND status NOT IN ("Done", "Closed")',
+                + f" AND {status_blurb}",
                 maxResults=0,
             ),
         )
