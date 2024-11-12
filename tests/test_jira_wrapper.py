@@ -5,15 +5,21 @@ import pytest
 
 from jira_sync import jira_wrapper
 from jira_sync.config.model import JiraConfig
+from jira_sync.jira_wrapper import JiraRunMode
 
 
 def pytest_generate_tests(metafunc):
-    if "dry_run" in metafunc.fixturenames:
-        metafunc.parametrize("dry_run", (False, True), ids=("for-real", "dry-run"), indirect=True)
+    if "run_mode" in metafunc.fixturenames:
+        metafunc.parametrize(
+            "run_mode",
+            (JiraRunMode.READ_WRITE, JiraRunMode.READ_ONLY, JiraRunMode.DRY_RUN),
+            ids=("read-write", "read-only", "dry-run"),
+            indirect=True,
+        )
 
 
 @pytest.fixture
-def dry_run(request):
+def run_mode(request):
     return request.param
 
 
@@ -38,8 +44,8 @@ def jira_config() -> JiraConfig:
 
 
 @pytest.fixture
-def jira_params(jira_config, dry_run) -> dict[str, str | object]:
-    return {"jira_config": jira_config, "dry_run": dry_run}
+def jira_params(jira_config, run_mode) -> dict[str, str | object]:
+    return {"jira_config": jira_config, "run_mode": run_mode}
 
 
 @pytest.fixture
@@ -59,27 +65,35 @@ class TestJIRA:
         "NEWSTATUS": "abc345",
     }
 
-    def test___init__(self, dry_run, jira_obj, jira_config, mocked_jira_pkg):
-        if dry_run:
+    def test___init__(self, run_mode, jira_obj, jira_config, mocked_jira_pkg):
+        if run_mode == JiraRunMode.DRY_RUN:
             mocked_jira_pkg.client.JIRA.assert_not_called()
-            assert jira_obj.jira is None
+            assert jira_obj._jira is None
         else:
             mocked_jira_pkg.client.JIRA.assert_called_with(
                 str(jira_config.instance_url), token_auth=jira_config.token
             )
-            assert jira_obj.jira == mocked_jira_pkg.client.JIRA.return_value
+            assert jira_obj._jira == mocked_jira_pkg.client.JIRA.return_value
         assert jira_obj.jira_config == jira_config
+        assert jira_obj.run_mode == run_mode
+
+    def test_jira(self, run_mode, jira_obj, mocked_jira_pkg):
+        if run_mode == JiraRunMode.DRY_RUN:
+            with pytest.raises(RuntimeError, match="JIRA client object not established"):
+                jira_obj.jira
+        else:
+            assert jira_obj.jira is mocked_jira_pkg.client.JIRA.return_value
 
     @pytest.mark.parametrize(
         "testcase", ("issues-found", "issues-found-inexact", "issues-not-found")
     )
-    def test_get_issue_by_link(self, testcase, dry_run, jira_obj, jira_config):
+    def test_get_issue_by_link(self, testcase, run_mode, jira_obj, jira_config):
         issues_found = "issues-found" in testcase
         inexact = "inexact" in testcase
 
         ISSUE_URL = "https://foo.bar/issue/1"
 
-        if not dry_run:
+        if run_mode != JiraRunMode.DRY_RUN:
             if issues_found:
                 inexact_issue = mock.Mock()
                 inexact_issue.fields.description = f"{ISSUE_URL} + some garbage!\nSome\nmore\ntext."
@@ -97,8 +111,8 @@ class TestJIRA:
 
         retval = jira_obj.get_issue_by_link(url=ISSUE_URL, instance="testinstance", repo="test")
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode == JiraRunMode.DRY_RUN:
+            assert jira_obj._jira is None
             assert retval is None
             return
 
@@ -122,10 +136,10 @@ class TestJIRA:
     @pytest.mark.parametrize(
         "labels_as_string", (True, False), ids=("labels-as-string", "labels-as-list")
     )
-    def test_get_open_issues_by_labels(self, labels_as_string, dry_run, jira_obj, jira_config):
+    def test_get_open_issues_by_labels(self, labels_as_string, run_mode, jira_obj, jira_config):
         ISSUE_URL = "https://foo.bar/issue/1"
 
-        if not dry_run:
+        if run_mode != JiraRunMode.DRY_RUN:
             issue = mock.Mock()
             issue.fields.description = f"{ISSUE_URL}\nSome\nmore\ntext."
             jira_obj.jira.search_issues.return_value = [issue]
@@ -137,8 +151,8 @@ class TestJIRA:
 
         retval = jira_obj.get_open_issues_by_labels(labels=labels)
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode == JiraRunMode.DRY_RUN:
+            assert jira_obj._jira is None
             assert retval == []
             return
 
@@ -156,13 +170,14 @@ class TestJIRA:
     @pytest.mark.parametrize(
         "test_case", ("success-labels-as-str", "success-labels-as-collection", "failure")
     )
-    def test_create_issue(self, test_case, dry_run, mocked_jira_pkg, jira_obj, jira_params, caplog):
+    def test_create_issue(
+        self, test_case, run_mode, mocked_jira_pkg, jira_obj, jira_params, caplog
+    ):
         success = "success" in test_case
         labels_as_str = "labels-as-str" in test_case
 
-        if not dry_run:
+        if run_mode != JiraRunMode.DRY_RUN:
             if success:
-                issue_sentinel = object()
                 jira_obj.jira.create_issue.return_value = issue_sentinel = object()
             else:
                 mocked_jira_pkg.exceptions.JIRAError = RuntimeError
@@ -178,8 +193,8 @@ class TestJIRA:
                 summary="summary", description="description", url="url", labels=labels
             )
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
             assert retval is None
             return
 
@@ -191,12 +206,12 @@ class TestJIRA:
             assert str(RuntimeError("BOO")) in caplog.text
 
     @pytest.mark.parametrize("cold_cache", (True, False), ids=("cold-cache", "hot-cache"))
-    def test__get_issue_transition_statuses(self, cold_cache, dry_run, jira_obj):
-        issue_sentinel = object()
+    def test__get_issue_transition_statuses(self, cold_cache, run_mode, jira_obj):
+        issue = mock.Mock(key="JIRA-KEY")
 
-        if dry_run:
-            assert jira_obj.jira is None
-            assert jira_obj._get_issue_transition_statuses(issue_sentinel) == {}
+        if run_mode == JiraRunMode.DRY_RUN:
+            assert jira_obj._jira is None
+            assert jira_obj._get_issue_transition_statuses(issue) == {}
             return
 
         with mock.patch.dict(jira_obj.project_statuses, clear=True):
@@ -205,17 +220,17 @@ class TestJIRA:
                     {"name": key, "id": value} for key, value in self.ISSUE_STATUSES.items()
                 ]
             else:
-                jira_obj.project_statuses[issue_sentinel] = self.ISSUE_STATUSES
+                jira_obj.project_statuses[issue] = self.ISSUE_STATUSES
 
-            assert jira_obj._get_issue_transition_statuses(issue_sentinel) == self.ISSUE_STATUSES
+            assert jira_obj._get_issue_transition_statuses(issue) == self.ISSUE_STATUSES
 
         if cold_cache:
-            jira_obj.jira.transitions.assert_called_once_with(issue_sentinel)
+            jira_obj.jira.transitions.assert_called_once_with(issue)
         else:
             jira_obj.jira.transitions.assert_not_called()
 
     @pytest.mark.parametrize("needs_transition", (True, False), ids=("needs-transition", "noop"))
-    def test_transition_issue(self, needs_transition, dry_run, jira_obj, caplog):
+    def test_transition_issue(self, needs_transition, run_mode, jira_obj, caplog):
         issue = mock.Mock(key="KEY")
         if needs_transition:
             issue.fields.status.name = "OLDSTATUS"
@@ -226,8 +241,8 @@ class TestJIRA:
             jira_obj.project_statuses[issue] = self.ISSUE_STATUSES
             jira_obj.transition_issue(issue, "NEWSTATUS")
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
             return
 
         if needs_transition:
@@ -247,7 +262,7 @@ class TestJIRA:
         ),
         ids=("assign", "reassign", "noop"),
     )
-    def test_assign_to_issue(self, assignee_set, needs_assignment, dry_run, jira_obj, caplog):
+    def test_assign_to_issue(self, assignee_set, needs_assignment, run_mode, jira_obj, caplog):
         issue = mock.Mock(key="KEY")
         if not assignee_set:
             issue.fields.assignee = None
@@ -260,8 +275,8 @@ class TestJIRA:
         with caplog.at_level("DEBUG"):
             jira_obj.assign_to_issue(issue=issue, user="newname")
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
             return
 
         if needs_assignment:
@@ -272,7 +287,7 @@ class TestJIRA:
             jira_obj.jira.assign_issue.assert_not_called()
 
     @pytest.mark.parametrize("test_case", ("labels-as-str", "labels-as-collection", "noop"))
-    def test_add_labels(self, test_case, dry_run, jira_obj, caplog):
+    def test_add_labels(self, test_case, run_mode, jira_obj, caplog):
         needs_labeling = "noop" not in test_case
         labels_as_str = "labels-as-str" in test_case
 
@@ -289,8 +304,8 @@ class TestJIRA:
         with caplog.at_level("DEBUG"):
             jira_obj.add_labels(issue, labels)
 
-        if dry_run:
-            assert jira_obj.jira is None
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
             return
 
         if needs_labeling:

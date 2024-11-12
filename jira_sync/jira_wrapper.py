@@ -6,7 +6,8 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 
 import logging
 from collections.abc import Collection
-from typing import cast
+from enum import IntEnum, auto
+from typing import Annotated, cast
 
 import jira
 
@@ -16,6 +17,14 @@ from jira import Issue
 from .config.model import JiraConfig
 
 log = logging.getLogger(__name__)
+
+
+class JiraRunMode(IntEnum):
+    """Define how a JIRA instance is supposed to be accessed."""
+
+    READ_WRITE: Annotated[int, "Read data from JIRA and make changes"] = auto()
+    READ_ONLY: Annotated[int, "Read data from JIRA, but don’t make changes"] = auto()
+    DRY_RUN: Annotated[int, "Don’t connect to JIRA"] = auto()
 
 
 class JIRA:
@@ -30,26 +39,34 @@ class JIRA:
     """
 
     jira_config: JiraConfig
-    jira: jira.client.JIRA | None
+    _jira: jira.client.JIRA | None
+    run_mode: JiraRunMode
     project_statuses: dict[Issue, dict[str, str]]
 
-    def __init__(self, jira_config: JiraConfig, dry_run: bool = False):
+    def __init__(self, jira_config: JiraConfig, run_mode: JiraRunMode = JiraRunMode.READ_WRITE):
         """
         Initialize the JIRA object.
 
         :param jira_config: The configuration describing the JIRA instance
-        :param dry_run: Whether to connect to the JIRA instance or not
+        :param run_mode: How JIRA is accessed
         """
         self.jira_config = jira_config
 
-        if dry_run:
-            self.jira = None
+        self.run_mode = run_mode
+        if run_mode == JiraRunMode.DRY_RUN:
+            self._jira = None
         else:
-            self.jira = jira.client.JIRA(
+            self._jira = jira.client.JIRA(
                 str(jira_config.instance_url), token_auth=jira_config.token
             )
 
         self.project_statuses = {}
+
+    @property
+    def jira(self) -> jira.client.JIRA:
+        if not self._jira:
+            raise RuntimeError("JIRA client object not established")
+        return self._jira
 
     def get_issue_by_link(self, *, url: str, instance: str, repo: str) -> Issue | None:
         """
@@ -61,7 +78,8 @@ class JIRA:
 
         :return: Retrieved issue or None
         """
-        if not self.jira:
+        if self.run_mode == JiraRunMode.DRY_RUN:
+            log.info("Skipping getting JIRA issues by link: %s", url)
             return None
 
         issues = cast(
@@ -91,11 +109,12 @@ class JIRA:
 
         :return: List of issues
         """
-        if not self.jira:
-            return []
-
         if isinstance(labels, str):
             labels = [labels]
+
+        if self.run_mode == JiraRunMode.DRY_RUN:
+            log.info("Skipping getting JIRA issues by labels: %s", ", ".join(labels))
+            return []
 
         labels_str = ", ".join(f'"{label}"' for label in labels)
 
@@ -127,7 +146,8 @@ class JIRA:
 
         :return: Issue object or None
         """
-        if not self.jira:
+        if self.run_mode != JiraRunMode.READ_WRITE:
+            log.info("Skipping creating JIRA issue for URL %s", url)
             return None
 
         if isinstance(labels, str):
@@ -154,7 +174,8 @@ class JIRA:
 
         :return: A dictionary mapping status names to ids
         """
-        if not self.jira:
+        if self.run_mode == JiraRunMode.DRY_RUN:
+            log.info("Skipping getting JIRA issue %s transition statuses", issue.key)
             return {}
 
         if issue not in self.project_statuses:
@@ -170,7 +191,8 @@ class JIRA:
         :param issue: Issue object
         :param status: New status to move to
         """
-        if not self.jira:
+        if self.run_mode != JiraRunMode.READ_WRITE:
+            log.info("Skipping transitioning JIRA issue %s to '%s'", issue.key, status)
             return
 
         if issue.fields.status.name != status:
@@ -184,7 +206,8 @@ class JIRA:
         :param issue: Issue object
         :param user: Username to assign to ticket
         """
-        if not self.jira:
+        if self.run_mode != JiraRunMode.READ_WRITE:
+            log.info("Skipping assigning user '%s' to JIRA issue %s", user, issue.key)
             return
 
         if user != getattr(issue.fields.assignee, "name", None):
@@ -198,7 +221,7 @@ class JIRA:
         :param issue: Issue object
         :param labels: Label(s) to add
         """
-        if not self.jira:
+        if self.run_mode != JiraRunMode.READ_WRITE:
             log.info("%s: Skipping adding labels %s to JIRA issue", issue.key, ", ".join(labels))
             return
 
