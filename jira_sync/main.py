@@ -133,7 +133,6 @@ def sync_tickets(config_file: str, dry_run: bool):
                 url=repo_issue.full_url,
                 instance=repo_issue.repository.instance.name,
                 repo=repo_issue.repository.name,
-                title=repo_issue.title,
             )
 
         if not jira_issue:

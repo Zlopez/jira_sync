@@ -95,9 +95,7 @@ class TestJIRA:
 
             jira_obj.jira.search_issues.return_value = issues
 
-        retval = jira_obj.get_issue_by_link(
-            url=ISSUE_URL, instance="testinstance", repo="test", title="Foo"
-        )
+        retval = jira_obj.get_issue_by_link(url=ISSUE_URL, instance="testinstance", repo="test")
 
         if dry_run:
             assert jira_obj.jira is None
