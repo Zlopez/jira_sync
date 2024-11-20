@@ -5,7 +5,8 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 """
 
 import logging
-from typing import Sequence, cast
+from collections.abc import Collection
+from typing import cast
 
 import jira
 
@@ -82,7 +83,7 @@ class JIRA:
 
         return issues[0]
 
-    def get_open_issues_by_labels(self, labels: str | Sequence[str]) -> list[Issue]:
+    def get_open_issues_by_labels(self, labels: str | Collection[str]) -> list[Issue]:
         """
         Retrieve open issues for the specified label.
 
