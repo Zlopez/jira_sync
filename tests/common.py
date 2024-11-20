@@ -94,14 +94,14 @@ TEST_PAGURE_JIRA_ISSUES = [
         (
             {
                 "fields": {
-                    "labels": ["foo", "namespace/test1"],
+                    "labels": ["foo", "label", "pagure.io:namespace/test1"],
                     "description": "https://pagure.io/namespace/test1/issue/4",
                     "status": {"name": "NEW"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["bar", "test2"],
+                    "labels": ["bar", "label", "pagure.io:test2"],
                     "description": "https://pagure.io/test2/issue/2",
                     "status": {"name": "IN_PROGRESS"},
                 },
@@ -109,21 +109,21 @@ TEST_PAGURE_JIRA_ISSUES = [
             {"fields": {"labels": ["hello"]}},
             {
                 "fields": {
-                    "labels": ["test2"],
+                    "labels": ["label", "pagure.io:test2"],
                     "description": "https://pagure.io/test2/issue/6",
                     "status": {"name": "DONE"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["test2"],
+                    "labels": ["label", "pagure.io:test2"],
                     "description": "https://pagure.io/test2/issue/1",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["namespace/test1"],
+                    "labels": ["label", "pagure.io:namespace/test1"],
                     "description": None,
                     "status": {"name": "CONFUSED"},
                 },
@@ -131,7 +131,7 @@ TEST_PAGURE_JIRA_ISSUES = [
             # This one should be last
             {
                 "fields": {
-                    "labels": ["namespace/test1"],
+                    "labels": ["label", "pagure.io:namespace/test1"],
                     "description": "https://pagure.io/namespace/test1/issue/7",
                     "status": {"name": "MISSED_THE_BUS"},
                 },
@@ -204,14 +204,14 @@ TEST_GITHUB_JIRA_ISSUES = [
         (
             {
                 "fields": {
-                    "labels": ["foo", "org/test1"],
+                    "labels": ["foo", "label", "github.com:org/test1"],
                     "description": "https://github.com/org/test1/issues/4",
                     "status": {"name": "NEW"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["bar", "test2"],
+                    "labels": ["bar", "label", "github.com:test2"],
                     "description": "https://github.com/test2/issues/2",
                     "status": {"name": "IN_PROGRESS"},
                 },
@@ -219,21 +219,21 @@ TEST_GITHUB_JIRA_ISSUES = [
             {"fields": {"labels": ["hello"]}},
             {
                 "fields": {
-                    "labels": ["test2"],
+                    "labels": ["label", "github.com:test2"],
                     "description": "https://github.com/test2/issues/6",
                     "status": {"name": "DONE"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["test2"],
+                    "labels": ["label", "github.com:test2"],
                     "description": "https://github.com/test2/issues/1",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
             {
                 "fields": {
-                    "labels": ["org/test1"],
+                    "labels": ["label", "github.com:org/test1"],
                     "description": None,
                     "status": {"name": "CONFUSED"},
                 },
@@ -241,7 +241,7 @@ TEST_GITHUB_JIRA_ISSUES = [
             # This one should be last
             {
                 "fields": {
-                    "labels": ["org/test1"],
+                    "labels": ["label", "github.com:org/test1"],
                     "description": "https://github.com/org/test1/issues/7",
                     "status": {"name": "MISSED_THE_BUS"},
                 },
@@ -263,22 +263,6 @@ def mock_jira__get_issues_by_labels(labels: str | Collection[str], closed=False)
         if any(label in issue.fields.labels for label in labels)
         and (issue.fields.status.name == "DONE") == closed
     ]
-
-
-def mock_jira__get_issue_by_link(*, url: str, instance: str, repo: str):
-    candidates = [
-        issue
-        for issue in TEST_JIRA_ISSUES
-        if issue.fields.description
-        and url in issue.fields.description
-        and (f"{instance}:{repo}" in issue.fields.labels or repo in issue.fields.labels)
-    ]
-    if not candidates:
-        return
-    for candidate in candidates:
-        if candidate.fields.description.startswith(f"{url}\n"):
-            return candidate
-    return candidates[0]
 
 
 def mock_jira__create_issue(

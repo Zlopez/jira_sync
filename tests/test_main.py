@@ -6,7 +6,7 @@ import pytest
 import tomlkit
 from click.testing import CliRunner
 
-from jira_sync import main, repositories
+from jira_sync import main, repositories, sync_mgr
 from jira_sync.config.model import JiraConfig
 from jira_sync.jira_wrapper import JiraRunMode
 
@@ -21,7 +21,6 @@ from .common import (
     JiraIssue,
     gen_test_config,
     mock_jira__create_issue,
-    mock_jira__get_issue_by_link,
     mock_jira__get_issues_by_labels,
     mock_requests_get,
 )
@@ -93,15 +92,25 @@ def test_sync_tickets(
         return repo
 
     with (
-        mock.patch("jira_sync.main.JIRA") as JIRA,
-        mock.patch("jira_sync.main.Instance", wraps=main.Instance) as MockInstance,
+        mock.patch("jira_sync.sync_mgr.JIRA") as JIRA,
+        mock.patch("jira_sync.sync_mgr.Instance", wraps=sync_mgr.Instance) as MockInstance,
+        mock.patch("jira_sync.main.SyncManager") as MockSyncManager,
         mock.patch("requests.get", wraps=mock_requests_get),
         mock.patch.object(main.log, "setLevel"),
         caplog.at_level("DEBUG"),
     ):
+        mock_sync_mgr = None
+
+        def wrap_sync_mgr(*args, **kwargs):
+            nonlocal mock_sync_mgr
+            real_sync_mgr = sync_mgr.SyncManager(*args, **kwargs)
+            mock_sync_mgr = mock.Mock(wraps=real_sync_mgr)
+            return mock_sync_mgr
+
+        MockSyncManager.side_effect = wrap_sync_mgr
+
         JIRA.return_value = jira = mock.Mock()
         jira.get_issues_by_labels.side_effect = mock.Mock(wraps=mock_jira__get_issues_by_labels)
-        jira.get_issue_by_link.side_effect = mock.Mock(wraps=mock_jira__get_issue_by_link)
         if creation_fails:
             jira.create_issue.return_value = None
         else:
@@ -124,61 +133,41 @@ def test_sync_tickets(
         for repo in partly_wrapped_repos:
             repo.get_open_issues.assert_not_called()
         assert all(
-            m.startswith("Querying '")
-            and m.endswith("' for repositories")
-            or m.startswith("Discovered repositories on ")
-            or m.startswith("Processing instance:")
-            or m.startswith("Processing repository:")
-            for m in caplog.messages
+            "Querying instance" not in m and "Querying repository" not in m for m in caplog.messages
         )
         return
 
     for repo in partly_wrapped_repos:
         repo.get_open_issues.assert_called_once_with()
 
+    assert jira.get_issues_by_labels.call_args_list == [
+        mock.call("label"),
+        mock.call("label", closed=True),
+    ]
+    assert all(f"Querying repository pagure.io:{name}" in caplog.text for name in TEST_PAGURE_REPOS)
     assert all(
-        mock.call((f"{instance_name}:{repo_name}", repo_name))
-        in jira.get_issues_by_labels.call_args_list
-        for instance_name, instance_repos in (
-            ("pagure.io", TEST_PAGURE_REPOS),
-            ("github.com", TEST_GITHUB_REPOS),
-        )
-        for repo_name in instance_repos
-    )
-    assert all(
-        f"Processing repository: pagure.io:{name}" in caplog.text for name in TEST_PAGURE_REPOS
-    )
-    assert all(
-        f"Processing repository: github.com:{name}" in caplog.text for name in TEST_GITHUB_REPOS
+        f"Querying repository github.com:{name}" in caplog.text for name in TEST_GITHUB_REPOS
     )
 
     # One JIRA issue per instance was marked as blocked
     jira_issue = JiraIssue.model_validate(TEST_PAGURE_JIRA_ISSUES[4])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["blocked"])
-    assert "Processing repo issue: https://pagure.io/test2/issue/1" in caplog.text
-    assert "Repo issue https://pagure.io/test2/issue/1 matched with CPE-5" in caplog.text
-    assert "Transition issue CPE-5 from IN_PROGRESS to BLOCKED" in caplog.text
+    assert "CPE-5: Matched with forge issue https://pagure.io/test2/issue/1" in caplog.text
+    assert "CPE-5: Transitioning issue from IN_PROGRESS to BLOCKED" in caplog.text
     jira_issue = JiraIssue.model_validate(TEST_GITHUB_JIRA_ISSUES[4])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["blocked"])
-    assert "Processing repo issue: https://github.com/test2/issues/1" in caplog.text
-    assert "Repo issue https://github.com/test2/issues/1 matched with CPE-105" in caplog.text
-    assert "Transition issue CPE-105 from IN_PROGRESS to BLOCKED" in caplog.text
+    assert "CPE-105: Matched with forge issue https://github.com/test2/issues/1" in caplog.text
+    assert "CPE-105: Transitioning issue from IN_PROGRESS to BLOCKED" in caplog.text
 
     # One JIRA issue per instance was closed upstream
     jira_issue = JiraIssue.model_validate(TEST_PAGURE_JIRA_ISSUES[1])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["closed"])
-    assert "Processing repo issue: https://pagure.io/test2/issue/2" in caplog.text
-    assert "Repo issue https://pagure.io/test2/issue/2 matched with CPE-2" in caplog.text
-    assert "Marking issue CPE-2 for closing" in caplog.text
+    assert "CPE-2: Matched with forge issue https://pagure.io/test2/issue/2" in caplog.text
+    assert "CPE-2: Transitioning issue from IN_PROGRESS to DONE" in caplog.text
     jira_issue = JiraIssue.model_validate(TEST_GITHUB_JIRA_ISSUES[1])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["closed"])
-    assert "Processing repo issue: https://github.com/test2/issues/2" in caplog.text
-    assert "Repo issue https://github.com/test2/issues/2 matched with CPE-102" in caplog.text
-    assert "Marking issue CPE-102 for closing" in caplog.text
-    assert (
-        "Closing 2 JIRA issues: CPE-2, CPE-102" in caplog.text
-        or "Closing 2 JIRA issues: CPE-102, CPE-2" in caplog.text
-    )
+    assert "CPE-102: Matched with forge issue https://github.com/test2/issues/2" in caplog.text
+    assert "CPE-102: Transitioning issue from IN_PROGRESS to DONE" in caplog.text
 
     # One JIRA issue has to be created per instance, it has no assignee
     new_jira_ids = [len(TEST_JIRA_ISSUES) + 1, len(TEST_JIRA_ISSUES) + 2]
@@ -189,8 +178,7 @@ def test_sync_tickets(
         url=pagure_issue["full_url"],
         labels=[jira_config["label"], f"pagure.io:{pagure_issue['repo']}"],
     )
-    assert "Processing repo issue: https://pagure.io/namespace/test1/issue/3" in caplog.text
-    assert "Creating jira ticket from 'https://pagure.io/namespace/test1/issue/3'" in caplog.text
+    assert "Creating JIRA ticket from https://pagure.io/namespace/test1/issue/3" in caplog.text
     github_issue = TEST_GITHUB_ISSUES[2]
     jira.create_issue.assert_any_call(
         summary=github_issue["title"],
@@ -198,16 +186,15 @@ def test_sync_tickets(
         url=github_issue["html_url"],
         labels=[jira_config["label"], f"github.com:{github_issue['repo']}"],
     )
-    assert "Processing repo issue: https://github.com/org/test1/issues/3" in caplog.text
-    assert "Creating jira ticket from 'https://github.com/org/test1/issues/3'" in caplog.text
+    assert "Creating JIRA ticket from https://github.com/org/test1/issues/3" in caplog.text
     if not creation_fails:
         for new_jira_id in new_jira_ids:
-            assert f"Not transitioning issue CPE-{new_jira_id} with status NEW" in caplog.text
+            assert f"CPE-{new_jira_id}: Not transitioning issue with status NEW" in caplog.text
     else:
         assert f"Couldn’t create new JIRA issue from '{pagure_issue['full_url']}'" in caplog.text
         assert f"Couldn’t create new JIRA issue from '{github_issue['html_url']}'" in caplog.text
         for new_jira_id in new_jira_ids:
-            assert f"Not transitioning issue CPE-{new_jira_id} with status NEW" not in caplog.text
+            assert f"CPE-{new_jira_id}: Not transitioning issue with status NEW" not in caplog.text
 
     # One issue per instance has been assigned meanwhile, update JIRA issues
     pagure_issue = TEST_PAGURE_ISSUES[3]
@@ -215,30 +202,28 @@ def test_sync_tickets(
     jira.assign_to_issue.assert_any_call(
         jira_issue, pagure_usermap[pagure_issue["assignee"]["name"]]
     )
-    assert "Processing repo issue: https://pagure.io/namespace/test1/issue/4" in caplog.text
-    assert "Repo issue https://pagure.io/namespace/test1/issue/4 matched with CPE-1" in caplog.text
-    assert "Transition issue CPE-1 from NEW to IN_PROGRESS" in caplog.text
+    assert (
+        "CPE-1: Matched with forge issue https://pagure.io/namespace/test1/issue/4" in caplog.text
+    )
+    assert "CPE-1: Transitioning issue from NEW to IN_PROGRESS" in caplog.text
     github_issue = TEST_GITHUB_ISSUES[3]
     jira_issue = JiraIssue.model_validate(TEST_GITHUB_JIRA_ISSUES[0])
     jira.assign_to_issue.assert_any_call(
         jira_issue, github_usermap[github_issue["assignee"]["login"]]
     )
-    assert "Processing repo issue: https://github.com/org/test1/issues/4" in caplog.text
-    assert "Repo issue https://github.com/org/test1/issues/4 matched with CPE-101" in caplog.text
-    assert "Transition issue CPE-101 from NEW to IN_PROGRESS" in caplog.text
+    assert "CPE-101: Matched with forge issue https://github.com/org/test1/issues/4" in caplog.text
+    assert "CPE-101: Transitioning issue from NEW to IN_PROGRESS" in caplog.text
 
     # One JIRA issue was marked DONE per instance, but it’s been reopened upstream
     jira_issue = JiraIssue.model_validate(TEST_PAGURE_JIRA_ISSUES[3])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["assigned"])
-    assert "Processing repo issue: https://pagure.io/test2/issue/6" in caplog.text
-    assert "Repo issue https://pagure.io/test2/issue/6 matched with CPE-4" in caplog.text
-    assert "Transition issue CPE-4 from DONE to IN_PROGRESS" in caplog.text
+    assert "CPE-4: Matched with forge issue https://pagure.io/test2/issue/6" in caplog.text
+    assert "CPE-4: Transitioning issue from DONE to IN_PROGRESS" in caplog.text
     jira_issue = JiraIssue.model_validate(TEST_GITHUB_JIRA_ISSUES[3])
     jira.transition_issue.assert_any_call(jira_issue, statuses_map["assigned"])
-    assert "Processing repo issue: https://github.com/test2/issues/6" in caplog.text
-    assert "Repo issue https://github.com/test2/issues/6 matched with CPE-104" in caplog.text
-    assert "Transition issue CPE-104 from DONE to IN_PROGRESS" in caplog.text
+    assert "CPE-104: Matched with forge issue https://github.com/test2/issues/6" in caplog.text
+    assert "CPE-104: Transitioning issue from DONE to IN_PROGRESS" in caplog.text
 
     # One issue per instance shouldn’t be considered
-    assert "Processing repo issue: https://pagure.io/test2/issue/5" not in caplog.text
-    assert "Processing repo issue: https://github.com/test2/issues/5" not in caplog.text
+    assert "https://pagure.io/test2/issue/5" not in caplog.text
+    assert "https://github.com/test2/issues/5" not in caplog.text

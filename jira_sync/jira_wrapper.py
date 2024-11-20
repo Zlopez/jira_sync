@@ -68,39 +68,6 @@ class JIRA:
             raise RuntimeError("JIRA client object not established")
         return self._jira
 
-    def get_issue_by_link(self, *, url: str, instance: str, repo: str) -> Issue | None:
-        """
-        Retrieve the issue with its external issue URL set to url.
-
-        :param url: URL to search for
-        :param instance: Instance name
-        :param repo: Project namespace/name
-
-        :return: Retrieved issue or None
-        """
-        if self.run_mode == JiraRunMode.DRY_RUN:
-            log.info("Skipping getting JIRA issues by link: %s", url)
-            return None
-
-        issues = cast(
-            jira.client.ResultList[Issue],
-            self.jira.search_issues(
-                f'project = "{self.jira_config.project}" AND Description ~ "{url}"'
-                + f' AND labels IN ("{instance}:{repo}", "{repo}")'
-            ),
-        )
-
-        if not issues:
-            return None
-
-        # Only the exact match is correct
-        for issue in issues:
-            if issue.fields.description and url == issue.fields.description.split("\n")[0]:
-                # Found the exact issue, let's return it
-                return issue
-
-        return issues[0]
-
     def get_issues_by_labels(
         self, labels: str | Collection[str], closed: bool = False
     ) -> list[Issue]:
