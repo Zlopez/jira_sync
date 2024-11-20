@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Collection
 from functools import partial
-from typing import Sequence
 from unittest import mock
 from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
@@ -283,7 +283,7 @@ TEST_GITHUB_JIRA_ISSUES = [
 TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES
 
 
-def _jira__get_open_issues_by_labels(labels: str | Sequence[str]):
+def _jira__get_open_issues_by_labels(labels: str | Collection[str]):
     if isinstance(labels, str):
         labels = [labels]
     return [issue for issue in TEST_JIRA_ISSUES if any(label in issue.labels for label in labels)]
