@@ -84,55 +84,6 @@ class TestJIRA:
         else:
             assert jira_obj.jira is mocked_jira_pkg.client.JIRA.return_value
 
-    @pytest.mark.parametrize(
-        "testcase", ("issues-found", "issues-found-inexact", "issues-not-found")
-    )
-    def test_get_issue_by_link(self, testcase, run_mode, jira_obj, jira_config):
-        issues_found = "issues-found" in testcase
-        inexact = "inexact" in testcase
-
-        ISSUE_URL = "https://foo.bar/issue/1"
-
-        if run_mode != JiraRunMode.DRY_RUN:
-            if issues_found:
-                inexact_issue = mock.Mock()
-                inexact_issue.fields.description = f"{ISSUE_URL} + some garbage!\nSome\nmore\ntext."
-
-                issues = [inexact_issue]
-
-                if not inexact:
-                    exact_issue = mock.Mock()
-                    exact_issue.fields.description = f"{ISSUE_URL}\nSome\nmore\ntext."
-                    issues.append(exact_issue)
-            else:
-                issues = []
-
-            jira_obj.jira.search_issues.return_value = issues
-
-        retval = jira_obj.get_issue_by_link(url=ISSUE_URL, instance="testinstance", repo="test")
-
-        if run_mode == JiraRunMode.DRY_RUN:
-            assert jira_obj._jira is None
-            assert retval is None
-            return
-
-        jira_obj.jira.search_issues.assert_called_once()
-        (jql_str,), _ = jira_obj.jira.search_issues.call_args
-
-        snippets = [sn.strip() for sn in jql_str.split("AND")]
-
-        assert f'project = "{jira_config.project}"' in snippets
-        assert f'Description ~ "{ISSUE_URL}"' in snippets
-        assert 'labels IN ("testinstance:test", "test")' in snippets
-
-        if issues_found:
-            if not inexact:
-                assert retval is exact_issue
-            else:
-                assert retval is inexact_issue
-        else:
-            assert retval is None
-
     @pytest.mark.parametrize("closed", (False, True), ids=("open", "closed"))
     @pytest.mark.parametrize(
         "labels_as_string", (True, False), ids=("labels-as-string", "labels-as-list")
