@@ -143,7 +143,7 @@ def sync_tickets(config_file: str, dry_run: bool):
                 summary=repo_issue.title,
                 description=repo_issue.content,
                 url=repo_issue.full_url,
-                label=f"{instance_name}:{repo_name}",
+                labels=[jira_config.label, f"{instance_name}:{repo_name}"],
             )
             if not jira_issue:
                 log.error("Couldn’t create new JIRA issue from '%s'", repo_issue.full_url)
@@ -173,7 +173,9 @@ def sync_tickets(config_file: str, dry_run: bool):
                     jira_status,
                 )
                 jira.transition_issue(jira_issue, jira_status)
-                jira.add_label(jira_issue, jira_config.label)
+                instance_name = repo_issue.repository.instance.name
+                repo_name = repo_issue.repository.name
+                jira.add_labels(jira_issue, [jira_config.label, f"{instance_name}:{repo_name}"])
             else:
                 log.info(
                     "Not transitioning issue %s from %s to %s",

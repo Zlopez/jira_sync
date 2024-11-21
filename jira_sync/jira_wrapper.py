@@ -110,7 +110,12 @@ class JIRA:
         return issues
 
     def create_issue(
-        self, *, summary: str, description: str, url: str, label: str = ""
+        self,
+        *,
+        summary: str,
+        description: str,
+        url: str,
+        labels: Collection[str] | str | None = None,
     ) -> Issue | None:
         """
         Create a new issue in JIRA.
@@ -118,19 +123,22 @@ class JIRA:
         :param summary: Name of the ticket
         :param description: Description of the ticket
         :param url: URL to add to url field, it is also added to description
-        :param label: Label for the issue
+        :param labels: Label(s) for the issue, if any
 
         :return: Issue object or None
         """
         if not self.jira:
             return None
 
+        if isinstance(labels, str):
+            labels = (labels,)
+
         issue_dict = {
             "project": {"key": self.jira_config.project},
             "summary": summary,
             "description": url + "\n\n" + description,
             "issuetype": {"name": self.jira_config.default_issue_type},
-            "labels": [label] if label else [],
+            "labels": labels if labels else [],
         }
         try:
             return self.jira.create_issue(fields=issue_dict)
@@ -183,16 +191,26 @@ class JIRA:
             log.debug("Assigning user %s to %s", user, issue.key)
             self.jira.assign_issue(issue.id, user)
 
-    def add_label(self, issue: Issue, label: str) -> None:
+    def add_labels(self, issue: Issue, labels: Collection[str] | str) -> None:
         """
         Add label to an issue.
 
         :param issue: Issue object
-        :param label: Label to add
+        :param labels: Label(s) to add
         """
         if not self.jira:
+            log.info("%s: Skipping adding labels %s to JIRA issue", issue.key, ", ".join(labels))
             return
 
-        if label not in issue.fields.labels:
-            log.debug("Adding label %s to %s", label, issue.key)
-            issue.add_field_value("labels", label)
+        if isinstance(labels, str):
+            labels = (labels,)
+
+        labels_to_add = [label for label in labels if label not in issue.fields.labels]
+
+        if not labels_to_add:
+            log.debug("%s: Not adding any labels", issue.key)
+            return
+
+        log.debug("%s: Adding labels: %s", issue.key, ", ".join(labels_to_add))
+        labels_field_ops = [{"add": label} for label in labels_to_add]
+        issue.update(update={"labels": labels_field_ops})

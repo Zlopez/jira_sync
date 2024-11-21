@@ -153,8 +153,13 @@ class TestJIRA:
         assert 'labels IN ("labels")' in snippets
         assert 'status NOT IN ("Done", "Closed")' in snippets
 
-    @pytest.mark.parametrize("success", (True, False), ids=("success", "failure"))
-    def test_create_issue(self, success, dry_run, mocked_jira_pkg, jira_obj, jira_params, caplog):
+    @pytest.mark.parametrize(
+        "test_case", ("success-labels-as-str", "success-labels-as-collection", "failure")
+    )
+    def test_create_issue(self, test_case, dry_run, mocked_jira_pkg, jira_obj, jira_params, caplog):
+        success = "success" in test_case
+        labels_as_str = "labels-as-str" in test_case
+
         if not dry_run:
             if success:
                 issue_sentinel = object()
@@ -163,9 +168,14 @@ class TestJIRA:
                 mocked_jira_pkg.exceptions.JIRAError = RuntimeError
                 jira_obj.jira.create_issue.side_effect = RuntimeError("BOO")
 
+        if labels_as_str:
+            labels = "label"
+        else:
+            labels = ("label",)
+
         with caplog.at_level("DEBUG"):
             retval = jira_obj.create_issue(
-                summary="summary", description="description", url="url", label="label"
+                summary="summary", description="description", url="url", labels=labels
             )
 
         if dry_run:
@@ -261,23 +271,31 @@ class TestJIRA:
             assert "Assigning user newname to KEY" not in caplog.text
             jira_obj.jira.assign_issue.assert_not_called()
 
-    @pytest.mark.parametrize("needs_labeling", (True, False), ids=("needs-labeling", "noop"))
-    def test_add_label(self, needs_labeling, dry_run, jira_obj, caplog):
+    @pytest.mark.parametrize("test_case", ("labels-as-str", "labels-as-collection", "noop"))
+    def test_add_labels(self, test_case, dry_run, jira_obj, caplog):
+        needs_labeling = "noop" not in test_case
+        labels_as_str = "labels-as-str" in test_case
+
         issue = mock.Mock(key="KEY")
         issue.fields.labels = ["OLDLABEL"]
         if not needs_labeling:
             issue.fields.labels.append("NEWLABEL")
 
+        if labels_as_str:
+            labels = "NEWLABEL"
+        else:
+            labels = ["NEWLABEL"]
+
         with caplog.at_level("DEBUG"):
-            jira_obj.add_label(issue, "NEWLABEL")
+            jira_obj.add_labels(issue, labels)
 
         if dry_run:
             assert jira_obj.jira is None
             return
 
         if needs_labeling:
-            assert "Adding label NEWLABEL to KEY" in caplog.text
-            issue.add_field_value.assert_called_once_with("labels", "NEWLABEL")
+            assert "KEY: Adding labels: NEWLABEL" in caplog.text
+            issue.update.assert_called_once_with(update={"labels": [{"add": "NEWLABEL"}]})
         else:
-            assert "Adding label NEWLABEL to KEY" not in caplog.text
-            issue.add_field_value.assert_not_called()
+            assert "KEY: Not adding any labels" in caplog.text
+            issue.update.assert_not_called()

@@ -305,14 +305,19 @@ def _jira__get_issue_by_link(*, url: str, instance: str, repo: str):
     return candidates[0]
 
 
-def _jira__create_issue(context: dict, summary: str, description: str, url: str, label: str):
+def _jira__create_issue(
+    context: dict, summary: str, description: str, url: str, labels: Collection[str] | str | None
+):
+    if isinstance(labels, str):
+        labels = (labels,)
+
     # Don’t reuse issue ids
     context["id"] = id_ = context.get("id", len(TEST_JIRA_ISSUES)) + 1
     return JiraIssue.model_validate(
         {
             "key": f"CPE-{id_}",
             "summary": summary,
-            "labels": [label] if label else [],
+            "labels": labels,
             "fields": {
                 "description": f"{url}\n\n{description}",
                 "status": {"name": "NEW"},
@@ -618,7 +623,7 @@ def test_sync_tickets(
         summary=pagure_issue["title"],
         description=pagure_issue["content"],
         url=pagure_issue["full_url"],
-        label=f"pagure.io:{pagure_issue['repo']}",
+        labels=[jira_config["label"], f"pagure.io:{pagure_issue['repo']}"],
     )
     assert "Processing repo issue: https://pagure.io/namespace/test1/issue/3" in caplog.text
     assert "Creating jira ticket from 'https://pagure.io/namespace/test1/issue/3'" in caplog.text
@@ -627,7 +632,7 @@ def test_sync_tickets(
         summary=github_issue["title"],
         description=github_issue["body"],
         url=github_issue["html_url"],
-        label=f"github.com:{github_issue['repo']}",
+        labels=[jira_config["label"], f"github.com:{github_issue['repo']}"],
     )
     assert "Processing repo issue: https://github.com/org/test1/issues/3" in caplog.text
     assert "Creating jira ticket from 'https://github.com/org/test1/issues/3'" in caplog.text
