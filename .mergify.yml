@@ -1,9 +1,8 @@
 pull_request_rules:
   - name: renovate
     actions:
-      queue:
+      merge:
         method: rebase
-        name: default
     conditions:
     - author=renovate[bot]
     - label!=no-mergify
@@ -12,12 +11,10 @@ pull_request_rules:
     - check-success=ci-typing
     - "check-success=ci-testsuite (311)"
     - "check-success=ci-testsuite (312)"
-
   - name: default
     actions:
-      queue:
+      merge:
         method: rebase
-        name: default
     conditions:
     - label!=no-mergify
     - '#approved-reviews-by>=1'
