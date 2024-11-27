@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 import tomlkit
 from click.testing import CliRunner
+from jira.exceptions import JIRAError
 
 from jira_sync import main, repositories, sync_mgr
 from jira_sync.config.model import JiraConfig
@@ -227,3 +228,20 @@ def test_sync_tickets(
     # One issue per instance shouldn’t be considered
     assert "https://pagure.io/test2/issue/5" not in caplog.text
     assert "https://github.com/test2/issues/5" not in caplog.text
+
+
+def test_sync_tickets_authentication_fails(tmp_path, runner, caplog):
+    config = gen_test_config(instances_enabled=True, repositories_enabled=True)
+    config_file = tmp_path / "config.test.toml"
+    with config_file.open("w") as fp:
+        tomlkit.dump(config, fp)
+
+    with mock.patch.object(main, "SyncManager") as MockSyncManager:
+        MockSyncManager.side_effect = JIRAError("BOO")
+
+        result = runner.invoke(
+            main.cli,
+            ["sync-tickets", "--config", str(config_file)],
+        )
+
+    assert "Error: BOO" in result.output
