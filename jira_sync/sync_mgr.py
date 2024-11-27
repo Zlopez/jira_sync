@@ -258,21 +258,36 @@ class SyncManager:
         """
         log.info("Reconciling matched JIRA and forge issues…")
         for jira_issue, forge_issue in matched_issues:
-            jira_assignee = (
+            forge_jira_assignee = (
                 forge_issue.repository.usermap.get(forge_issue.assignee)
                 if forge_issue.assignee
                 else None
             )
-            if jira_assignee != jira_issue.fields.assignee:
+            jira_assignee = jira_issue.fields.assignee
+            if (
+                bool(forge_jira_assignee) is not bool(jira_assignee)
+                or jira_assignee
+                and forge_jira_assignee
+                and forge_jira_assignee not in (jira_assignee.key, jira_assignee.emailAddress)
+            ):
                 log.info(
                     "%s: Changing assignee from %r to %r",
                     jira_issue.key,
-                    jira_issue.fields.assignee,
-                    jira_assignee,
+                    jira_assignee.key if jira_assignee else None,
+                    forge_jira_assignee,
                 )
-                self._jira.assign_to_issue(jira_issue, jira_assignee)
+                self._jira.assign_to_issue(jira_issue, forge_jira_assignee)
             else:
-                log.debug("%s: Not changing assignee %r", jira_issue.key, jira_assignee)
+                if jira_assignee:
+                    log.debug(
+                        "%s: Not changing assignee from '%s <%s>' to %r",
+                        jira_issue.key,
+                        jira_assignee.key,
+                        jira_assignee.emailAddress,
+                        forge_jira_assignee,
+                    )
+                else:
+                    log.debug("%s: Not assigning to %r", jira_issue.key, forge_jira_assignee)
 
             jira_status = getattr(self._jira_config.statuses, forge_issue.status.name)
             if jira_issue.fields.status.name == jira_status:

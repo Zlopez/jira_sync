@@ -350,12 +350,23 @@ class TestSyncManager:
             labels=[sync_mgr._jira_config.label, "instance.io:repository"],
         )
 
-    def test_reconcile_jira_forge_issues(self, sync_mgr, caplog):
+    @pytest.mark.parametrize("testcase", ("usermap-key", "usermap-email"))
+    def test_reconcile_jira_forge_issues(self, testcase, sync_mgr, caplog):
         jira_issue_specs = [
             {},
-            {"fields": {"assignee": "jira_user", "status": {"name": "IN_PROGRESS"}}},
-            {"fields": {"assignee": "other_jira_user", "status": {"name": "IN_PROGRESS"}}},
-            {"fields": {"assignee": "jira_user", "status": {"name": "IN_PROGRESS"}}},
+            {
+                "fields": {
+                    "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
+                    "status": {"name": "IN_PROGRESS"},
+                },
+            },
+            {"fields": {"assignee": {}, "status": {"name": "IN_PROGRESS"}}},
+            {
+                "fields": {
+                    "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
+                    "status": {"name": "IN_PROGRESS"},
+                },
+            },
             {"fields": {"status": {"name": "SITUATION_IS_BORF"}}},
         ]
         forge_issue_specs = [
@@ -371,11 +382,16 @@ class TestSyncManager:
             for num, spec in enumerate(jira_issue_specs, 1)
         ]
 
+        if "usermap-email" in testcase:
+            mapped_jira_user = "jira_user@example.com"
+        else:
+            mapped_jira_user = "jira_user"
+
         mock_repo = mock_with_name(
             Repository,
             name="repo",
             instance=mock_with_name(name="instance"),
-            usermap={"forge_user": "jira_user"},
+            usermap={"forge_user": mapped_jira_user},
         )
         forge_issues = [
             ForgeIssue(
@@ -406,20 +422,24 @@ class TestSyncManager:
 
         # Check user assignments
         assert assign_to_issue.call_args_list == [
-            mock.call(jira_issues[0], "jira_user"),
+            mock.call(jira_issues[0], mapped_jira_user),
             mock.call(jira_issues[2], None),
             mock.call(jira_issues[3], None),
         ]
         # Change unassigned to known forge <=> JIRA user
-        assert "JIRA-0001: Changing assignee from None to 'jira_user'" in caplog.text
+        assert f"JIRA-0001: Changing assignee from None to '{mapped_jira_user}'" in caplog.text
         # Keep known forge <=> JIRA user
-        assert "JIRA-0002: Not changing assignee 'jira_user'" in caplog.text
+        assert (
+            "JIRA-0002: Not changing assignee from 'jira_user <jira_user@example.com>' to"
+            + f" '{mapped_jira_user}'"
+            in caplog.text
+        )
         # Unassign JIRA user without corresponding forge user
         assert "JIRA-0003: Changing assignee from 'other_jira_user' to None" in caplog.text
         # Unassign JIRA user when forge issue is unassigned
         assert "JIRA-0004: Changing assignee from 'jira_user' to None" in caplog.text
         # Leave issue unassigned
-        assert "JIRA-0005: Not changing assignee None" in caplog.text
+        assert "JIRA-0005: Not assigning to None" in caplog.text
 
         # Check state transitions & set labels
         assert transition_issue.call_args_list == [

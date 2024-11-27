@@ -15,9 +15,14 @@ class JiraStatus(HashableModel):
     name: str = "NEW"
 
 
+class JiraAssignee(HashableModel):
+    key: str = "other_jira_user"
+    emailAddress: str = "other-address@example.com"
+
+
 class JiraIssueFields(HashableModel):
     description: str | None = None
-    assignee: str | None = None
+    assignee: JiraAssignee | None = None
     status: JiraStatus = JiraStatus()
     labels: tuple[str, ...] = ()
 
