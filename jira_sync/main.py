@@ -5,6 +5,7 @@ Script for synchronizing tickets from various trackers in JIRA project.
 import logging
 
 import click
+from jira.exceptions import JIRAError
 
 from .config import load_configuration
 from .jira_wrapper import JiraRunMode
@@ -69,5 +70,8 @@ def sync_tickets(config_file: str, run_mode: JiraRunMode):
     :param run_mode: How JIRA is supposed to be accessed
     """
     config = load_configuration(config_file)
-    sync_mgr = SyncManager(config=config, run_mode=run_mode)
+    try:
+        sync_mgr = SyncManager(config=config, run_mode=run_mode)
+    except JIRAError as e:
+        raise click.ClickException(e.text) from e
     sync_mgr.sync_issues()

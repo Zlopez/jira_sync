@@ -74,6 +74,7 @@ class TestJIRA:
                 str(jira_config.instance_url), token_auth=jira_config.token
             )
             assert jira_obj._jira == mocked_jira_pkg.client.JIRA.return_value
+            jira_obj._jira.session.assert_called_once()
         assert jira_obj.jira_config == jira_config
         assert jira_obj.run_mode == run_mode
 

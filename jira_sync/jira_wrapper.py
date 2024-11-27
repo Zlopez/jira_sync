@@ -59,6 +59,8 @@ class JIRA:
             self._jira = jira.client.JIRA(
                 str(jira_config.instance_url), token_auth=jira_config.token
             )
+            # Establish that the connection is authenticated, will throw an exception without.
+            self._jira.session()
 
         self.project_statuses = {}
 
