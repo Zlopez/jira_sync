@@ -11,7 +11,6 @@ from typing import Annotated, Any, ClassVar, Self, Type
 from weakref import ProxyType, proxy
 
 import requests
-from jira import Issue as JiraIssue
 from pydantic import AnyUrl
 
 from ..config.model import InstanceConfig
@@ -40,7 +39,6 @@ class Issue:
     content: str
     assignee: str | None
     status: IssueStatus
-    jira_issue: JiraIssue | None = None
 
 
 class APIBase:
