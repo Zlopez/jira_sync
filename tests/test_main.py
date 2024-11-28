@@ -230,7 +230,7 @@ def test_sync_tickets(
     assert "https://github.com/test2/issues/5" not in caplog.text
 
 
-def test_sync_tickets_authentication_fails(tmp_path, runner, caplog):
+def test_sync_tickets_authentication_fails(tmp_path, runner):
     config = gen_test_config(instances_enabled=True, repositories_enabled=True)
     config_file = tmp_path / "config.test.toml"
     with config_file.open("w") as fp:
