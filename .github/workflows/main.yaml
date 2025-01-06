@@ -16,7 +16,7 @@ jobs:
 
       - name: Install poetry
         run: >
-          python3 -m pip install poetry<2.0.0
+          python3 -m pip install "poetry<2.0.0"
 
       - name: Check Poetry lock file consistency
         run: >
