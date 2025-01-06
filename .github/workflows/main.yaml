@@ -20,7 +20,7 @@ jobs:
 
       - name: Check Poetry lock file consistency
         run: >
-          poetry lock --check
+          poetry check --lock
 
       - name: Run lint and format tests
         run: tox -e lint,format
