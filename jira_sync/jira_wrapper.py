@@ -6,8 +6,8 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 
 import logging
 from collections.abc import Collection
-from enum import IntEnum, auto
-from typing import Annotated, cast
+from enum import IntEnum
+from typing import cast
 
 import jira
 
@@ -22,9 +22,9 @@ log = logging.getLogger(__name__)
 class JiraRunMode(IntEnum):
     """Define how a JIRA instance is supposed to be accessed."""
 
-    READ_WRITE: Annotated[int, "Read data from JIRA and make changes"] = auto()
-    READ_ONLY: Annotated[int, "Read data from JIRA, but don’t make changes"] = auto()
-    DRY_RUN: Annotated[int, "Don’t connect to JIRA"] = auto()
+    READ_WRITE = 0  # Read data from JIRA and make changes
+    READ_ONLY = 1  # Read data from JIRA, but don’t make changes
+    DRY_RUN = 2  # Don’t connect to JIRA
 
 
 class JIRA:
