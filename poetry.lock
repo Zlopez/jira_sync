@@ -51,13 +51,13 @@ virtualenv = ["virtualenv (>=20.0.35)"]
 
 [[package]]
 name = "cachecontrol"
-version = "0.14.1"
+version = "0.14.2"
 description = "httplib2 caching for requests"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cachecontrol-0.14.1-py3-none-any.whl", hash = "sha256:65e3abd62b06382ce3894df60dde9e0deb92aeb734724f68fa4f3b91e97206b9"},
-    {file = "cachecontrol-0.14.1.tar.gz", hash = "sha256:06ef916a1e4eb7dba9948cdfc9c76e749db2e02104a9a1277e8b642591a0f717"},
+    {file = "cachecontrol-0.14.2-py3-none-any.whl", hash = "sha256:ebad2091bf12d0d200dfc2464330db638c5deb41d546f6d7aca079e87290f3b0"},
+    {file = "cachecontrol-0.14.2.tar.gz", hash = "sha256:7d47d19f866409b98ff6025b6a0fca8e4c791fb31abbd95f622093894ce903a2"},
 ]
 
 [package.dependencies]
@@ -1553,13 +1553,13 @@ files = [
 
 [[package]]
 name = "trove-classifiers"
-version = "2025.1.6.15"
+version = "2025.1.10.15"
 description = "Canonical source for classifiers on PyPI (pypi.org)."
 optional = false
 python-versions = "*"
 files = [
-    {file = "trove_classifiers-2025.1.6.15-py3-none-any.whl", hash = "sha256:cd8e14d53158c72b68f7adcd119e3b4c7271d282999d3a8ec7486733a6202e4d"},
-    {file = "trove_classifiers-2025.1.6.15.tar.gz", hash = "sha256:49ab0326e000c54be6adc945d8fd618265c27de1296cf17caf9106fef96d2da4"},
+    {file = "trove_classifiers-2025.1.10.15-py3-none-any.whl", hash = "sha256:9824eb16f7df1b1cc1c217c52ce56c76869d6263da2067f8eadc45122a731cfc"},
+    {file = "trove_classifiers-2025.1.10.15.tar.gz", hash = "sha256:be2c7d25e46cd39d5c7151acd389584df3919f61890f5f163c8ee2090ff71e7f"},
 ]
 
 [[package]]
