@@ -8,6 +8,7 @@ project = "Project"  # Name of the project to sync tickets to
 token = "token"  # API token to use for authentication
 default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 label = "label"  # Label used for all issues created by this script
+story_points_field = "" # JIRA issue field used for story points (this could be custom field)
 
 # Map the ticket status to JIRA project status
 # Recognizable statuses are:
@@ -27,6 +28,8 @@ enabled = true  # Enable/Disable instance
 instance_url = "https://pagure.io/"
 blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "fedora_jira_usermap.toml"  # External file, can be reused
+# converts specific label to story point
+labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
 
 # Alternatively, map directly:
 # [instances."pagure.io".usermap]
@@ -41,7 +44,7 @@ label = "test"
 
 [instances."pagure.io".repositories]
 "namespace/test1" = {}
-"test2" = {label = "test"}
+"test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}
 
 [instances."github.com"]
 type = "github"
@@ -49,6 +52,7 @@ enabled = true
 instance_url = "https://github.com"
 instance_api_url = "https://api.github.com"
 blocked_label = "blocked"
+labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
 
 [instances."github.com".usermap]
 github_user1 = "jira_user1"
@@ -60,4 +64,4 @@ label = "test"
 
 [instances."github.com".repositories]
 "org/test1" = {}
-"test2" = {label = "test"}
+"test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}

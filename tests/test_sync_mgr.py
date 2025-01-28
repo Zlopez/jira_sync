@@ -293,6 +293,7 @@ class TestSyncManager:
                     title=f"Title {idx}",
                     content="Some content",
                     repository=repository,
+                    story_points=10,
                 )
                 for idx in range(2)
             ]
@@ -358,6 +359,7 @@ class TestSyncManager:
                 "fields": {
                     "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
+                    "story_points": 0,
                 },
             },
             {"fields": {"assignee": {}, "status": {"name": "IN_PROGRESS"}}},
@@ -365,6 +367,7 @@ class TestSyncManager:
                 "fields": {
                     "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
+                    "story_points": 0,
                 },
             },
             {"fields": {"status": {"name": "SITUATION_IS_BORF"}}},
@@ -403,6 +406,7 @@ class TestSyncManager:
                         "content": f"Content {num}",
                         "assignee": None,
                         "status": ForgeIssueStatus.new,
+                        "story_points": 10,
                     }
                     | spec
                 )
@@ -416,6 +420,8 @@ class TestSyncManager:
             mock.patch.object(sync_mgr._jira, "assign_to_issue") as assign_to_issue,
             mock.patch.object(sync_mgr._jira, "transition_issue") as transition_issue,
             mock.patch.object(sync_mgr._jira, "add_labels") as add_labels,
+            mock.patch.object(sync_mgr._jira, "add_story_points") as add_story_points,
+            mock.patch.object(sync_mgr._jira, "update_issue") as update_issue,
             caplog.at_level("DEBUG"),
         ):
             sync_mgr.reconcile_jira_forge_issues(matched_issues)
@@ -447,9 +453,20 @@ class TestSyncManager:
             mock.call(jira_issues[3], "NEW"),
         ]
         assert add_labels.call_args_list == [
-            mock.call(jira_issues[0], (sync_mgr._jira_config.label, "instance:repo")),
-            mock.call(jira_issues[3], (sync_mgr._jira_config.label, "instance:repo")),
+            mock.call(jira_issues[0], (sync_mgr._jira_config.label, "instance:repo"), {}),
+            mock.call(jira_issues[1], (sync_mgr._jira_config.label, "instance:repo"), {}),
+            mock.call(jira_issues[2], (sync_mgr._jira_config.label, "instance:repo"), {}),
+            mock.call(jira_issues[3], (sync_mgr._jira_config.label, "instance:repo"), {}),
+            mock.call(jira_issues[4], (sync_mgr._jira_config.label, "instance:repo"), {}),
         ]
+        assert add_story_points.call_args_list == [
+            mock.call(jira_issues[0], 10, mock.ANY),
+            mock.call(jira_issues[1], 10, mock.ANY),
+            mock.call(jira_issues[2], 10, mock.ANY),
+            mock.call(jira_issues[3], 10, mock.ANY),
+            mock.call(jira_issues[4], 10, mock.ANY),
+        ]
+        assert update_issue.call_count == 5
         assert "JIRA-0001: Transitioning issue from NEW to IN_PROGRESS" in caplog.text
         assert "JIRA-0002: Not transitioning issue with status IN_PROGRESS" in caplog.text
         assert "JIRA-0003: Not transitioning issue with status IN_PROGRESS" in caplog.text

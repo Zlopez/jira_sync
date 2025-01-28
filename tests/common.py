@@ -271,7 +271,11 @@ def mock_jira__get_issues_by_labels(labels: str | Collection[str], closed=False)
 
 
 def mock_jira__create_issue(
-    context: dict, summary: str, description: str, url: str, labels: Collection[str] | str
+    context: dict,
+    summary: str,
+    description: str,
+    url: str,
+    labels: Collection[str] | str,
 ):
     if isinstance(labels, str):
         labels = (labels,)
@@ -426,6 +430,7 @@ def gen_test_config(*, instances_enabled, repositories_enabled):
                 "token": "token",
                 "default_issue_type": "Story",
                 "label": "label",
+                "story_points_field": "story_points",
                 "statuses": {
                     "new": "NEW",
                     "assigned": "IN_PROGRESS",
@@ -440,6 +445,11 @@ def gen_test_config(*, instances_enabled, repositories_enabled):
                 "enabled": instances_enabled,
                 "instance_url": "https://pagure.io/",
                 "blocked_label": "blocked",
+                "story_points": {
+                    "label1": 1,
+                    "label2": 5,
+                    "label3": 10,
+                },
                 "usermap": TEST_PAGURE_TO_JIRA_USERS.copy(),
                 "repositories": test_pagure_repos,
             },

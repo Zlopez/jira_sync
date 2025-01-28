@@ -52,7 +52,7 @@ class PagureRepository(PagureBase, Repository):
         content = api_result["content"]
         _assignee = api_result["assignee"]
         _status = api_result["status"].lower()
-        _tags = api_result["tags"]
+        tags = api_result["tags"]
 
         if _assignee:
             assignee = _assignee["name"]
@@ -60,7 +60,7 @@ class PagureRepository(PagureBase, Repository):
             assignee = None
 
         if _status != "closed":
-            if self.blocked_label and self.blocked_label in _tags:
+            if self.blocked_label and self.blocked_label in tags:
                 status = IssueStatus.blocked
             else:
                 if not _assignee:
@@ -70,6 +70,12 @@ class PagureRepository(PagureBase, Repository):
         else:
             status = IssueStatus.closed
 
+        story_points = 0
+
+        for tag in tags:
+            if tag in self.labels_to_story_points.keys():
+                story_points = max(story_points, self.labels_to_story_points[tag])
+
         return Issue(
             repository=self,
             full_url=full_url,
@@ -77,6 +83,7 @@ class PagureRepository(PagureBase, Repository):
             content=content,
             assignee=assignee,
             status=status,
+            story_points=story_points,
         )
 
     def get_issue_params(self) -> dict[str, Any]:

@@ -16,6 +16,7 @@ EXPECTED_CONFIG = {
             "instance_url": "https://jira.atlassian.com/",
             "label": "label",
             "project": "Project",
+            "story_points_field": "",
             "statuses": {
                 "assigned": "IN_PROGRESS",
                 "blocked": "BLOCKED",
@@ -33,6 +34,7 @@ EXPECTED_CONFIG = {
             "instance_api_url": None,
             "instance_url": "https://pagure.io/",
             "label": None,
+            "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
             "query_repositories": [
                 {
                     "blocked_label": None,
@@ -40,11 +42,26 @@ EXPECTED_CONFIG = {
                     "label": "test",
                     "namespace": "fedora-infra",
                     "pattern": None,
+                    "labels_to_story_points": None,
                 },
             ],
             "repositories": {
-                "namespace/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
-                "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},
+                "namespace/test1": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": None,
+                    "labels_to_story_points": None,
+                },
+                "test2": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": "test",
+                    "labels_to_story_points": {
+                        "little-work": 1,
+                        "medium-work": 5,
+                        "lots-of-work": 10,
+                    },
+                },
             },
             "type": "pagure",
             "usermap": {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"},
@@ -56,17 +73,33 @@ EXPECTED_CONFIG = {
             "instance_api_url": "https://api.github.com/",
             "instance_url": "https://github.com/",
             "label": None,
+            "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
             "query_repositories": [
                 {
                     "blocked_label": None,
                     "enabled": True,
                     "label": "test",
                     "org": "fedora-infra",
+                    "labels_to_story_points": None,
                 },
             ],
             "repositories": {
-                "org/test1": {"blocked_label": "blocked", "enabled": True, "label": None},
-                "test2": {"blocked_label": "blocked", "enabled": True, "label": "test"},
+                "org/test1": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": None,
+                    "labels_to_story_points": None,
+                },
+                "test2": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": "test",
+                    "labels_to_story_points": {
+                        "little-work": 1,
+                        "medium-work": 5,
+                        "lots-of-work": 10,
+                    },
+                },
             },
             "type": "github",
             "usermap": {"github_user1": "jira_user1", "github_user2": "jira_user2"},

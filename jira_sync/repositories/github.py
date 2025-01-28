@@ -100,6 +100,12 @@ class GitHubRepository(GitHubBase, Repository):
         else:
             status = IssueStatus.closed
 
+        story_points = 0
+
+        for tag in _labels:
+            if tag in self.labels_to_story_points.keys():
+                story_points = max(story_points, self.labels_to_story_points[tag])
+
         return Issue(
             repository=self,
             full_url=full_url,
@@ -107,6 +113,7 @@ class GitHubRepository(GitHubBase, Repository):
             content=content,
             assignee=assignee,
             status=status,
+            story_points=story_points,
         )
 
     def get_issue_params(self) -> dict[str, Any]:

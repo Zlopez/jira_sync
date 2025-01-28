@@ -5,7 +5,7 @@ Manage synchronization between JIRA and upsteam git forges.
 import logging
 from collections.abc import Collection
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from jira import Issue as JiraIssue
 
@@ -312,8 +312,14 @@ class SyncManager:
                         jira_status,
                     )
                     self._jira.transition_issue(jira_issue, jira_status)
-                    instance_name = forge_issue.repository.instance.name
-                    repo_name = forge_issue.repository.name
-                    self._jira.add_labels(
-                        jira_issue, (self._jira_config.label, f"{instance_name}:{repo_name}")
-                    )
+            # Update the issue
+            changes: dict[str, Any] = {}
+            instance_name = forge_issue.repository.instance.name
+            repo_name = forge_issue.repository.name
+            changes = self._jira.add_labels(
+                jira_issue,
+                (self._jira_config.label, f"{instance_name}:{repo_name}"),
+                changes,
+            )
+            changes = self._jira.add_story_points(jira_issue, forge_issue.story_points, changes)
+            self._jira.update_issue(jira_issue, changes)
