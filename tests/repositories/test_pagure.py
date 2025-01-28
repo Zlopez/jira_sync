@@ -66,6 +66,7 @@ class TestPagureInstance(PagureTestBase, BaseTestInstance):
     def create_obj(cls, **kwargs):
         kwargs.setdefault("instance_url", "https://example.net")
         kwargs.setdefault("instance_api_url", None)
+        kwargs.setdefault("story_points", {"label1": 5})
         return super().create_obj(**kwargs)
 
     @pytest.mark.parametrize("with_api_url", (False, True), ids=("without-api-url", "with-api-url"))
@@ -150,7 +151,7 @@ class TestPagureRepository(PagureTestBase, BaseTestRepository):
             "content": "CONTENT",
             "assignee": {"name": "PAGURE_ASSIGNEE"} if status != "new" else None,
             "status": status,
-            "tags": ["one tag", "another tag"],
+            "tags": ["one tag", "another tag", "label1"],
         }
 
         if status == "blocked":
@@ -171,6 +172,7 @@ class TestPagureRepository(PagureTestBase, BaseTestRepository):
         else:
             assert issue.assignee is None
         assert issue.status == IssueStatus[status]
+        assert issue.story_points == 5
 
     @pytest.mark.parametrize("with_label", (True, False), ids=("with-label", "without-label"))
     def test_get_issue_params(self, with_label):

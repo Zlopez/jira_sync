@@ -8,6 +8,7 @@ project = "Project"  # Name of the project to sync tickets to
 token = "token"  # API token to use for authentication
 default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 label = "label"  # Label used for all issues created by this script
+story_points_field = "" # JIRA issue field used for story points (this could be custom field)
 
 # Map the ticket status to JIRA project status
 # Recognizable statuses are:
@@ -32,6 +33,12 @@ usermap = "fedora_jira_usermap.toml"  # External file, can be reused
 # [instances."pagure.io".usermap]
 # fedora_user1 = "jira_user1"
 # fedora_user2 = "jira_user2"
+
+# This section converts specific label on repository to story point
+[instances."pagure.io".story_points]
+label1 = 1
+label2 = 5
+label3 = 10
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"

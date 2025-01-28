@@ -112,6 +112,7 @@ class JIRA:
         description: str,
         url: str,
         labels: Collection[str] | str | None = None,
+        story_points: int,
     ) -> Issue | None:
         """
         Create a new issue in JIRA.
@@ -136,6 +137,7 @@ class JIRA:
             "description": url + "\n\n" + description,
             "issuetype": {"name": self.jira_config.default_issue_type},
             "labels": labels if labels else [],
+            self.jira_config.story_points_field: story_points,
         }
         try:
             return self.jira.create_issue(fields=issue_dict)
@@ -191,17 +193,16 @@ class JIRA:
             log.debug("Assigning user %s to %s", user, issue.key)
             self.jira.assign_issue(issue.id, user)
 
-    def add_labels(self, issue: Issue, labels: Collection[str] | str) -> None:
+    def add_labels(self, issue: Issue, labels: Collection[str] | str, changes: dict) -> dict:
         """
         Add label to an issue.
 
         :param issue: Issue object
         :param labels: Label(s) to add
-        """
-        if self.run_mode != JiraRunMode.READ_WRITE:
-            log.info("%s: Skipping adding labels %s to JIRA issue", issue.key, ", ".join(labels))
-            return
+        :param changes: Dictionary containing all the changes for the issue
 
+        :return: Updated dictionary of changes
+        """
         if isinstance(labels, str):
             labels = (labels,)
 
@@ -209,8 +210,50 @@ class JIRA:
 
         if not labels_to_add:
             log.debug("%s: Not adding any labels", issue.key)
-            return
+            return changes
 
         log.debug("%s: Adding labels: %s", issue.key, ", ".join(labels_to_add))
         labels_field_ops = [{"add": label} for label in labels_to_add]
-        issue.update(update={"labels": labels_field_ops})
+        return changes | {"labels": labels_field_ops}
+
+    def add_story_points(self, issue: Issue, story_points: int, changes: dict) -> dict:
+        """
+        Add story points to an issue.
+
+        :param issue: Issue object
+        :param labels: Label(s) to add
+        :param changes: Dictionary containing all the changes for the issue
+
+        :return: Updated dictionary of changes
+        """
+        if not self.jira_config.story_points_field:
+            log.debug("Story point field in jira is not set. Skipping adding story points.")
+            return changes
+
+        if getattr(issue.fields, self.jira_config.story_points_field) == story_points:
+            log.debug("%s: story points already set to correct value. Skipping.", issue.key)
+            return changes
+
+        if story_points == 0:
+            log.debug("%s: story points are set to 0. Skipping.", issue.key)
+            return changes
+
+        log.debug("%s: Adding story points: %d", issue.key, story_points)
+        return changes | {self.jira_config.story_points_field: [{"set": story_points}]}
+
+    def update_issue(self, issue: Issue, changes: dict) -> None:
+        """
+        Update fields on the issue.
+
+        :param issue: Issue object
+        :param changes: Dictionary containing all the changes for the issue
+        """
+        if self.run_mode != JiraRunMode.READ_WRITE:
+            log.info("%s: Skipping updating JIRA issue with changes %s", issue.key, changes)
+            return
+
+        if not changes:
+            log.info("%s: Nothing to update. Skipping.", issue.key)
+            return
+
+        issue.update(update=changes)

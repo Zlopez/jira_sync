@@ -178,6 +178,7 @@ def test_sync_tickets(
         description=pagure_issue["content"],
         url=pagure_issue["full_url"],
         labels=[jira_config["label"], f"pagure.io:{pagure_issue['repo']}"],
+        story_points=0,
     )
     assert "Creating JIRA ticket from https://pagure.io/namespace/test1/issue/3" in caplog.text
     github_issue = TEST_GITHUB_ISSUES[2]
@@ -186,6 +187,7 @@ def test_sync_tickets(
         description=github_issue["body"],
         url=github_issue["html_url"],
         labels=[jira_config["label"], f"github.com:{github_issue['repo']}"],
+        story_points=0,
     )
     assert "Creating JIRA ticket from https://github.com/org/test1/issues/3" in caplog.text
     if not creation_fails:

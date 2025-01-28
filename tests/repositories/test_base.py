@@ -57,6 +57,7 @@ class BaseTestInstance:
         label=None,
         blocked_label="blocked",
         usermap=None,
+        story_points={},
         query_repositories=(),
         repositories={},
     ):
@@ -70,6 +71,7 @@ class BaseTestInstance:
             label=label,
             blocked_label=blocked_label,
             usermap=usermap,
+            story_points=story_points,
             query_repositories=query_repositories,
             repositories=repositories,
         )

@@ -16,6 +16,7 @@ EXPECTED_CONFIG = {
             "instance_url": "https://jira.atlassian.com/",
             "label": "label",
             "project": "Project",
+            "story_points_field": "",
             "statuses": {
                 "assigned": "IN_PROGRESS",
                 "blocked": "BLOCKED",
@@ -33,6 +34,11 @@ EXPECTED_CONFIG = {
             "instance_api_url": None,
             "instance_url": "https://pagure.io/",
             "label": None,
+            "story_points": {
+                "label1": 1,
+                "label2": 5,
+                "label3": 10,
+            },
             "query_repositories": [
                 {
                     "blocked_label": None,
@@ -56,6 +62,7 @@ EXPECTED_CONFIG = {
             "instance_api_url": "https://api.github.com/",
             "instance_url": "https://github.com/",
             "label": None,
+            "story_points": {},
             "query_repositories": [
                 {
                     "blocked_label": None,

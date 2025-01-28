@@ -107,6 +107,7 @@ class GitHubRepository(GitHubBase, Repository):
             content=content,
             assignee=assignee,
             status=status,
+            story_points=0,
         )
 
     def get_issue_params(self) -> dict[str, Any]:

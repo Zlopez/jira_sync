@@ -29,6 +29,7 @@ TEST_JIRA_CONFIG = {
     "token": "TOKEN",
     "default_issue_type": "Story",
     "label": "label",
+    "story_points_field": "story_points",
     "statuses": {
         "new": "NEW",
         "assigned": "IN_PROGRESS",
@@ -146,7 +147,11 @@ class TestJIRA:
 
         with caplog.at_level("DEBUG"):
             retval = jira_obj.create_issue(
-                summary="summary", description="description", url="url", labels=labels
+                summary="summary",
+                description="description",
+                url="url",
+                labels=labels,
+                story_points=0,
             )
 
         if run_mode != JiraRunMode.READ_WRITE:
@@ -249,6 +254,7 @@ class TestJIRA:
 
         issue = mock.Mock(key="KEY")
         issue.fields.labels = ["OLDLABEL"]
+        changes = {}
         if not needs_labeling:
             issue.fields.labels.append("NEWLABEL")
 
@@ -258,7 +264,7 @@ class TestJIRA:
             labels = ["NEWLABEL"]
 
         with caplog.at_level("DEBUG"):
-            jira_obj.add_labels(issue, labels)
+            output = jira_obj.add_labels(issue, labels, changes)
 
         if run_mode != JiraRunMode.READ_WRITE:
             assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
@@ -266,7 +272,68 @@ class TestJIRA:
 
         if needs_labeling:
             assert "KEY: Adding labels: NEWLABEL" in caplog.text
-            issue.update.assert_called_once_with(update={"labels": [{"add": "NEWLABEL"}]})
+            assert output == {"labels": [{"add": "NEWLABEL"}]}
         else:
             assert "KEY: Not adding any labels" in caplog.text
+            assert output == {}
+
+    def test_story_points_field_not_set(self, jira_obj, caplog):
+        issue = mock.Mock(key="KEY")
+        changes = {}
+
+        old_value = jira_obj.jira_config.story_points_field
+        jira_obj.jira_config.story_points_field = ""
+
+        with caplog.at_level("DEBUG"):
+            output = jira_obj.add_story_points(issue, 0, changes)
+
+        assert "Story point field in jira is not set. Skipping adding story points." in caplog.text
+        assert output == {}
+
+        # Set the story_point_field value back
+        jira_obj.jira_config.story_points_field = old_value
+
+    @pytest.mark.parametrize("test_case", (0, 3, 5))
+    def test_story_points(self, test_case, run_mode, jira_obj, caplog):
+        no_story_points = test_case == 0
+        no_change = test_case == 3
+
+        issue = mock.Mock(key="KEY")
+        issue.fields.story_points = 3
+        changes = {}
+
+        with caplog.at_level("DEBUG"):
+            output = jira_obj.add_story_points(issue, test_case, changes)
+
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
+            return
+
+        if no_story_points:
+            assert "KEY: story points are set to 0. Skipping." in caplog.text
+            assert output == {}
+        elif no_change:
+            assert "KEY: story points already set to correct value. Skipping." in caplog.text
+            assert output == {}
+        else:
+            assert f"KEY: Adding story points: {test_case}" in caplog.text
+            assert output == {"story_points": [{"set": test_case}]}
+
+    @pytest.mark.parametrize("test_case", ({}, {"field": "value"}))
+    def test_issue_update(self, test_case, run_mode, jira_obj, caplog):
+        no_change = test_case == {}
+
+        issue = mock.Mock(key="KEY")
+
+        with caplog.at_level("DEBUG"):
+            jira_obj.update_issue(issue, test_case)
+
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
+            return
+
+        if no_change:
+            assert "KEY: Nothing to update. Skipping." in caplog.text
             issue.update.assert_not_called()
+        else:
+            issue.update.assert_called_once_with(update=test_case)
