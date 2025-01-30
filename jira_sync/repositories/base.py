@@ -202,7 +202,7 @@ class Instance(APIBase):
 
     usermap: dict[str, str]
     repositories: dict[str, "Repository"]
-    story_points: dict[str, int]
+    labels_to_story_points: dict[str, int]
 
     _query_repositories: Collection[dict[str, Any]]
     _repositories: dict[str, Any]
@@ -226,7 +226,7 @@ class Instance(APIBase):
         usermap: dict[str, str],
         query_repositories: Collection[dict[str, Any]],
         repositories: dict[str, dict[str, Any]],
-        story_points: dict[str, int],
+        labels_to_story_points: dict[str, int],
         **kwargs,
     ) -> None:
         """
@@ -257,7 +257,7 @@ class Instance(APIBase):
         self.blocked_label = blocked_label
 
         self.usermap = usermap
-        self.story_points = story_points or {}
+        self.labels_to_story_points = labels_to_story_points or {}
         self._query_repositories = query_repositories or ()
         self._repositories = repositories or {}
         repo_specs: dict[str, dict[str, Any]] = (

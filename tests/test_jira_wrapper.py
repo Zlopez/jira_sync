@@ -151,7 +151,6 @@ class TestJIRA:
                 description="description",
                 url="url",
                 labels=labels,
-                story_points=0,
             )
 
         if run_mode != JiraRunMode.READ_WRITE:

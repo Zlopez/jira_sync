@@ -73,8 +73,8 @@ class PagureRepository(PagureBase, Repository):
         story_points = 0
 
         for tag in tags:
-            if tag in self.story_points.keys():
-                story_points = self.story_points[tag]
+            if tag in self.labels_to_story_points.keys():
+                story_points = max(story_points, self.labels_to_story_points[tag])
 
         return Issue(
             repository=self,

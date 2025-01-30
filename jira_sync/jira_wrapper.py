@@ -7,7 +7,7 @@ See https://developer.atlassian.com/server/jira/platform/rest-apis/
 import logging
 from collections.abc import Collection
 from enum import IntEnum
-from typing import cast
+from typing import Any, cast
 
 import jira
 
@@ -112,7 +112,6 @@ class JIRA:
         description: str,
         url: str,
         labels: Collection[str] | str | None = None,
-        story_points: int,
     ) -> Issue | None:
         """
         Create a new issue in JIRA.
@@ -131,14 +130,14 @@ class JIRA:
         if isinstance(labels, str):
             labels = (labels,)
 
-        issue_dict = {
+        issue_dict: dict[str, Any] = {
             "project": {"key": self.jira_config.project},
             "summary": summary,
             "description": url + "\n\n" + description,
             "issuetype": {"name": self.jira_config.default_issue_type},
             "labels": labels if labels else [],
-            self.jira_config.story_points_field: story_points,
         }
+
         try:
             return self.jira.create_issue(fields=issue_dict)
         except jira.exceptions.JIRAError as e:
@@ -221,7 +220,7 @@ class JIRA:
         Add story points to an issue.
 
         :param issue: Issue object
-        :param labels: Label(s) to add
+        :param story_points: Amount of story points to add
         :param changes: Dictionary containing all the changes for the issue
 
         :return: Updated dictionary of changes

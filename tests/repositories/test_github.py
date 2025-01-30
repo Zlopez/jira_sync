@@ -176,10 +176,15 @@ class TestGitHubInstance(GitHubTestBase, BaseTestInstance):
 class TestGitHubRepository(GitHubTestBase, BaseTestRepository):
     cls = github.GitHubRepository
 
+    @classmethod
+    def create_obj(cls, **kwargs):
+        kwargs.setdefault("labels_to_story_points", {"label1": 5})
+        return super().create_obj(**kwargs)
+
     @pytest.mark.parametrize("status", ("closed", "blocked", "new", "assigned"))
     @pytest.mark.parametrize("label_type", (dict, str), ids=("labels-as-dict", "labels-as-str"))
     def test_normalize_issue(self, status, label_type):
-        labels = ["one tag", "another tag"]
+        labels = ["one tag", "another tag", "label1"]
         if status == "blocked":
             labels.append("blocked")
 
@@ -210,6 +215,7 @@ class TestGitHubRepository(GitHubTestBase, BaseTestRepository):
         else:
             assert issue.assignee is None
         assert issue.status == IssueStatus[status]
+        assert issue.story_points == 5
 
     @pytest.mark.parametrize("with_label", (True, False), ids=("with-label", "without-label"))
     def test_get_issue_params(self, with_label):

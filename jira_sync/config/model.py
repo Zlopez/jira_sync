@@ -21,7 +21,7 @@ class JiraConfig(BaseModel):
     token: str
     default_issue_type: str
     label: str
-    story_points_field: str
+    story_points_field: str = ""
 
     statuses: StatusesConfig
 
@@ -37,10 +37,12 @@ class RepoConfig(BaseModel):
     enabled: bool | None = None
     label: str | None = None
     blocked_label: str | None = None
+    labels_to_story_points: dict[str, int] | None = None
 
 
 class QueryRepoSpec(RepoConfig):
     enabled: bool = True
+    labels_to_story_points: dict[str, int] | None = None
 
 
 class InstanceConfigBase(BaseModel):
@@ -53,7 +55,7 @@ class InstanceConfigBase(BaseModel):
     label: str | None = None
     blocked_label: str
     usermap: InlineUsermap | Path
-    story_points: dict[str, int] = {}
+    labels_to_story_points: dict[str, int] = {}
     query_repositories: list = []
     repositories: dict[str, RepoConfig] = {}
 

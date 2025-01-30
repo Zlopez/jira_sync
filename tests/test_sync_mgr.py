@@ -349,7 +349,6 @@ class TestSyncManager:
             description="Some content",
             url="URL1",
             labels=[sync_mgr._jira_config.label, "instance.io:repository"],
-            story_points=10,
         )
 
     @pytest.mark.parametrize("testcase", ("usermap-key", "usermap-email"))

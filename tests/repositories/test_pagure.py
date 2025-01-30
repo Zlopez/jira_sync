@@ -66,7 +66,7 @@ class TestPagureInstance(PagureTestBase, BaseTestInstance):
     def create_obj(cls, **kwargs):
         kwargs.setdefault("instance_url", "https://example.net")
         kwargs.setdefault("instance_api_url", None)
-        kwargs.setdefault("story_points", {"label1": 5})
+        kwargs.setdefault("labels_to_story_points", {"label1": 5})
         return super().create_obj(**kwargs)
 
     @pytest.mark.parametrize("with_api_url", (False, True), ids=("without-api-url", "with-api-url"))

@@ -276,7 +276,6 @@ def mock_jira__create_issue(
     description: str,
     url: str,
     labels: Collection[str] | str,
-    story_points: int,
 ):
     if isinstance(labels, str):
         labels = (labels,)
