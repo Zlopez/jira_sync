@@ -27,6 +27,11 @@ enabled = true  # Enable/Disable Pagure instance
 instance_url = "https://pagure.io/"  # URL for pagure endpoint
 blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
+# converts specific label to story point
+labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 10 }
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 3
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"
@@ -39,6 +44,7 @@ label = "cpe"  # Label marking issues to by synchronized
 "releng" = {}
 "centos-infra" = {}
 "fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
+"fedora-infra/forgejo-deployment" = {}
 
 # GitHub configuration
 [instances."github.com"]
@@ -50,6 +56,9 @@ token = "$secrets.githubcom_token"
 label = "cpe"
 blocked_label = "blocked"
 usermap = "githubcom_jira_usermap.toml"
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 3
 
 [[instances."github.com".query_repositories]]
 org = "fedora-infra"
