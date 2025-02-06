@@ -135,20 +135,23 @@ class Repository(APIBase):
             return getattr(self.instance, key)
         return self._config_params[key]
 
-    def get_issue_params(self) -> dict[str, Any]:
+    def get_issue_params(self, closed: bool) -> dict[str, Any]:
         """Get query parameters to select pertinent issues.
 
         :return: A dictionary with the necessary query parameters
         """
         raise NotImplementedError
 
-    def get_open_issues(self) -> list[Issue]:
+    def get_issues(self, closed: bool = False) -> list[Issue]:
         """
-        Retrieve all pertinent open project issues on project.
+        Retrieve all pertinent project issues on project.
+        By default returns only open issues.
+
+        :param closed: Retrieve closed issues.
 
         :return: List of issues
         """
-        kwargs = self.get_issue_params()
+        kwargs = self.get_issue_params(closed)
 
         issues: list[Issue] = []
         response = None
@@ -174,7 +177,14 @@ class Repository(APIBase):
                 response.raise_for_status()
             first_call = False
 
-        log.info("Retrieved %s open issues from %s:%s", len(issues), self.instance.name, self.name)
+        if not closed:
+            log.info(
+                "Retrieved %s open issues from %s:%s", len(issues), self.instance.name, self.name
+            )
+        else:
+            log.info(
+                "Retrieved %s closed issues from %s:%s", len(issues), self.instance.name, self.name
+            )
 
         return issues
 
@@ -227,6 +237,7 @@ class Instance(APIBase):
         query_repositories: Collection[dict[str, Any]],
         repositories: dict[str, dict[str, Any]],
         labels_to_story_points: dict[str, int],
+        retrieve_closed_days_ago: int,
         **kwargs,
     ) -> None:
         """
@@ -237,8 +248,14 @@ class Instance(APIBase):
         :param instance_api_url: Optional (Root) URL of the API server hosting the
             repository
         :param enabled: If the repository is enabled or not
+        :param token: API token for the instance
+        :param label: Label to retrieve
+        :param blocked_label: Label that marks the issue as blocked
         :param usermap: Mapping of forge usernames to JIRA usernames
+        :param query_repositories: Configuration for querying repositories by namespace
         :param repositories: Mapping of repository names to configuration
+        :param labels_to_story_poinsts: Mapping of labels to story points values
+        :param retrieve_closed_days_ago: How much ago we should look for closed tickets
         """
         self.name = name
 
@@ -258,6 +275,7 @@ class Instance(APIBase):
 
         self.usermap = usermap
         self.labels_to_story_points = labels_to_story_points or {}
+        self.retrieve_closed_days_ago = retrieve_closed_days_ago or 0
         self._query_repositories = query_repositories or ()
         self._repositories = repositories or {}
         repo_specs: dict[str, dict[str, Any]] = (

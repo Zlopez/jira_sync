@@ -4,6 +4,7 @@ Module for communicating with the GitHub REST API.
 See https://docs.github.com/en/rest?apiVersion=2022-11-28
 """
 
+import datetime as dt
 import logging
 from typing import Any, ClassVar
 
@@ -116,10 +117,20 @@ class GitHubRepository(GitHubBase, Repository):
             story_points=story_points,
         )
 
-    def get_issue_params(self) -> dict[str, Any]:
+    def get_issue_params(self, closed: bool) -> dict[str, Any]:
+        params = {}
+        if closed:
+            params = {
+                "state": "closed",
+                "since": (
+                    dt.datetime.now(dt.UTC) - dt.timedelta(days=self.retrieve_closed_days_ago)
+                ).isoformat(timespec="seconds"),  # We need to format to ISO 8601
+            }
         if not self.label:
-            return {}
-        return {"params": {"labels": self.label}}
+            return {"params": params}
+        else:
+            params["labels"] = self.label
+        return {"params": params}
 
 
 class GitHubInstance(GitHubBase, Instance):

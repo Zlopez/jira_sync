@@ -4,6 +4,7 @@ Module for communicating with pagure API.
 See https://pagure.io/api/0
 """
 
+import datetime as dt
 import logging
 from typing import Any
 
@@ -86,10 +87,22 @@ class PagureRepository(PagureBase, Repository):
             story_points=story_points,
         )
 
-    def get_issue_params(self) -> dict[str, Any]:
+    def get_issue_params(self, closed: bool) -> dict[str, Any]:
+        params = {}
+        if closed:
+            params = {
+                "status": "Closed",
+                "since": int(
+                    (
+                        dt.datetime.now(dt.UTC) - dt.timedelta(days=self.retrieve_closed_days_ago)
+                    ).timestamp()
+                ),
+            }
         if not self.label:
-            return {}
-        return {"params": {"tags": self.label}}
+            return {"params": params}
+        else:
+            params["tags"] = self.label
+        return {"params": params}
 
 
 class PagureInstance(PagureBase, Instance):
