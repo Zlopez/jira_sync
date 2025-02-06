@@ -58,6 +58,7 @@ class BaseTestInstance:
         blocked_label="blocked",
         usermap=None,
         labels_to_story_points={},
+        retrieve_closed_days_ago=0,
         query_repositories=(),
         repositories={},
     ):
@@ -72,6 +73,7 @@ class BaseTestInstance:
             blocked_label=blocked_label,
             usermap=usermap,
             labels_to_story_points=labels_to_story_points,
+            retrieve_closed_days_ago=retrieve_closed_days_ago,
             query_repositories=query_repositories,
             repositories=repositories,
         )
@@ -210,7 +212,12 @@ class TestRepository(BaseTestRepository):
     @pytest.mark.parametrize(
         "needs_selector", (True, False), ids=("needs-selector", "doesnt-need-selector")
     )
-    def test_get_open_issues(self, repo_has_issues, success, needs_selector):
+    @pytest.mark.parametrize(
+        "retrieve_closed",
+        (True, False),
+        ids=("retrieve-closed-issues", "doesnt-retrieve-closed-issues"),
+    )
+    def test_get_issues(self, repo_has_issues, success, needs_selector, retrieve_closed):
         repo = self.create_obj()
 
         API_RESULT_PAGES = [[1, 2, 3], [4, 5, 6]]
@@ -254,7 +261,10 @@ class TestRepository(BaseTestRepository):
             normalize_issue.side_effect = lambda x: x
 
             with expectation:
-                issues = repo.get_open_issues()
+                if retrieve_closed:
+                    issues = repo.get_issues(closed=True)
+                else:
+                    issues = repo.get_issues()
 
         # At least one attempt…
         assert get_next_page.call_args_list[0] == mock.call(endpoint="issues", response=None)
@@ -266,7 +276,7 @@ class TestRepository(BaseTestRepository):
                 )
             else:
                 assert issues == list(chain.from_iterable(API_RESULT_PAGES))
-            get_issue_params.assert_called_once_with()
+            get_issue_params.assert_called_once_with(retrieve_closed)
             for response in API_RESPONSES:
                 get_next_page.assert_any_call(endpoint="issues", response=response)
             assert requests_get.call_args_list == [
@@ -274,4 +284,4 @@ class TestRepository(BaseTestRepository):
             ]
         else:
             get_next_page.assert_called_once()
-            get_issue_params.assert_called_once_with()
+            get_issue_params.assert_called_once_with(retrieve_closed)

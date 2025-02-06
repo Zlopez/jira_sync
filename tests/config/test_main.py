@@ -35,6 +35,7 @@ EXPECTED_CONFIG = {
             "instance_url": "https://pagure.io/",
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
                     "blocked_label": None,
@@ -74,6 +75,7 @@ EXPECTED_CONFIG = {
             "instance_url": "https://github.com/",
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
                     "blocked_label": None,

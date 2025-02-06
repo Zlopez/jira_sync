@@ -60,10 +60,10 @@ class SyncManager:
         open_jira_issues = self.filter_open_jira_issues_by_forge_repo(
             self.retrieve_open_jira_issues()
         )
-        open_forge_issues = self.retrieve_open_forge_issues()
+        forge_issues = self.retrieve_forge_issues()
 
         matched_issues, unmatched_jira_issues, unmatched_forge_issues = (
-            self.match_jira_forge_issues(open_jira_issues, open_forge_issues)
+            self.match_jira_forge_issues(open_jira_issues, forge_issues)
         )
         log.debug(
             "=> %d matched, %d unmatched JIRA, %d unmatched forge issues",
@@ -87,8 +87,8 @@ class SyncManager:
         log.info("Retrieving open JIRA issues…")
         return self._jira.get_issues_by_labels(self._jira_config.label)
 
-    def retrieve_open_forge_issues(self) -> Collection[Issue]:
-        """Retrieve open issues from configured forge instances.
+    def retrieve_forge_issues(self) -> Collection[Issue]:
+        """Retrieve issues from configured forge instances.
 
         :return: A collection of forge issues
         """
@@ -100,7 +100,10 @@ class SyncManager:
                 if not repo.enabled:
                     continue
                 log.info("Querying repository %s:%s…", instance.name, repo.name)
-                issues.extend(repo.get_open_issues())
+                issues.extend(repo.get_issues())
+                # Retrieve closed issues
+                if instance.retrieve_closed_days_ago:
+                    issues.extend(repo.get_issues(closed=True))
         return issues
 
     @cached_property

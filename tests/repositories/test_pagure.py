@@ -175,12 +175,24 @@ class TestPagureRepository(PagureTestBase, BaseTestRepository):
         assert issue.story_points == 5
 
     @pytest.mark.parametrize("with_label", (True, False), ids=("with-label", "without-label"))
-    def test_get_issue_params(self, with_label):
+    @pytest.mark.parametrize("closed", (True, False), ids=("closed", "open"))
+    def test_get_issue_params(self, with_label, closed):
         repo = self.create_obj(label="the-label" if with_label else None)
 
-        params = repo.get_issue_params()
+        params = repo.get_issue_params(closed)
 
         if with_label:
             assert params["params"]["tags"] == "the-label"
+            if closed:
+                assert params["params"]["status"] == "Closed"
+                assert "since" in params["params"]
+            else:
+                assert "status" not in params["params"]
+                assert "since" not in params["params"]
         else:
-            assert params == {}
+            if closed:
+                assert params["params"]["status"] == "Closed"
+                assert "since" in params["params"]
+                assert "tags" not in params["params"]
+            else:
+                assert params == {"params": {}}

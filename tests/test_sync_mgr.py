@@ -119,7 +119,7 @@ class TestSyncManager:
                 sync_mgr, "filter_open_jira_issues_by_forge_repo"
             ) as filter_open_jira_issues_by_forge_repo,
             mock.patch.object(sync_mgr, "retrieve_open_jira_issues") as retrieve_open_jira_issues,
-            mock.patch.object(sync_mgr, "retrieve_open_forge_issues") as retrieve_open_forge_issues,
+            mock.patch.object(sync_mgr, "retrieve_forge_issues") as retrieve_forge_issues,
             mock.patch.object(sync_mgr, "match_jira_forge_issues") as match_jira_forge_issues,
             mock.patch.object(sync_mgr, "close_jira_issues") as close_jira_issues,
             mock.patch.object(
@@ -131,7 +131,7 @@ class TestSyncManager:
         ):
             retrieve_open_jira_issues.return_value = open_jira_issues = object()
             filter_open_jira_issues_by_forge_repo.return_value = filtered_jira_issues = object()
-            retrieve_open_forge_issues.return_value = open_forge_issues = object()
+            retrieve_forge_issues.return_value = forge_issues = object()
             matched_issues = {object()}
             unmatched_jira_issues = {object()}
             unmatched_forge_issues = {object()}
@@ -148,8 +148,8 @@ class TestSyncManager:
 
         retrieve_open_jira_issues.assert_called_once_with()
         filter_open_jira_issues_by_forge_repo.assert_called_once_with(open_jira_issues)
-        retrieve_open_forge_issues.assert_called_once_with()
-        match_jira_forge_issues.assert_called_once_with(filtered_jira_issues, open_forge_issues)
+        retrieve_forge_issues.assert_called_once_with()
+        match_jira_forge_issues.assert_called_once_with(filtered_jira_issues, forge_issues)
         close_jira_issues.assert_called_once_with(unmatched_jira_issues)
         create_or_reopen_jira_issues.assert_called_once_with(unmatched_forge_issues)
         reconcile_jira_forge_issues.assert_called_once_with(
@@ -170,16 +170,14 @@ class TestSyncManager:
         ids=("repositories-enabled", "repositories-disabled"),
         indirect=["test_config"],
     )
-    def test_retrieve_open_forge_issues(
-        self, repos_enabled, sync_mgr, mock_jira, test_config, caplog
-    ):
+    def test_retrieve_forge_issues(self, repos_enabled, sync_mgr, mock_jira, test_config, caplog):
         with caplog.at_level("DEBUG"):
-            issues = sync_mgr.retrieve_open_forge_issues()
+            issues = sync_mgr.retrieve_forge_issues()
 
         if repos_enabled:
             for instance in sync_mgr._instances_by_name.values():
                 for repo in instance.repositories.values():
-                    repo.get_open_issues.assert_called_once_with()
+                    repo.get_issues.assert_has_calls([mock.call(), mock.call(closed=True)])
                     assert f"Querying repository {instance.name}:{repo.name}…" in caplog.text
 
             for inst_name, inst_spec in test_config.instances.items():
@@ -195,7 +193,7 @@ class TestSyncManager:
 
             for instance in sync_mgr._instances_by_name.values():
                 for repo in instance.repositories.values():
-                    repo.get_open_issues.assert_not_called()
+                    repo.get_issues.assert_not_called()
                     assert f"Querying repository {instance.name}:{repo.name}…" not in caplog.text
 
     def test_jira_repo_labels(self, sync_mgr, test_config):
