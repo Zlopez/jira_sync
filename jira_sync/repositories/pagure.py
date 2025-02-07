@@ -26,8 +26,11 @@ class PagureBase(APIBase):
         if response:
             api_result = response.json()
             url = api_result["pagination"]["next"]
+            # Url already contains the params we used for the first call
+            # There is no need to add them again
             if not url:
                 return None
+            return {"url": url}
         else:
             if endpoint:
                 endpoint = "/" + endpoint.lstrip("/")

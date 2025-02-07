@@ -52,11 +52,10 @@ class PagureTestBase:
             case "last-page":
                 assert args is None
 
-        if page != "last-page":
-            if with_params:
-                assert args["params"] == kwargs["params"]
-            else:
-                assert "params" not in args
+        if page == "next-page":
+            assert "params" not in args
+        elif with_params and page != "last-page":
+            assert args["params"] == kwargs["params"]
 
 
 class TestPagureInstance(PagureTestBase, BaseTestInstance):
