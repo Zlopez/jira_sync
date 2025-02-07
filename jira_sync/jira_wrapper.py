@@ -255,4 +255,6 @@ class JIRA:
             log.info("%s: Nothing to update. Skipping.", issue.key)
             return
 
+        log.info("%s: Updating ticket with '%s'", issue.key, changes)
+
         issue.update(update=changes)
