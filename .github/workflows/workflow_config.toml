@@ -45,6 +45,7 @@ label = "cpe"  # Label marking issues to by synchronized
 "centos-infra" = {}
 "fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
 "fedora-infra/forgejo-deployment" = {}
+"fedora-infra/infrastructure-projects" = {}
 
 # GitHub configuration
 [instances."github.com"]
