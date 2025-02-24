@@ -47,6 +47,7 @@ label = "cpe"  # Label marking issues to by synchronized
 "fedora-infra/forgejo-deployment" = {}
 "fedora-infra/infrastructure-projects" = {}
 "fedora-qa" = {}
+"fedora-infra/arc" = {}
 
 # GitHub configuration
 [instances."github.com"]
