@@ -6,6 +6,7 @@ project = "CPE"  # Name of the project to sync tickets to
 token = "$secrets.jira_token"  # API token to use for authentication
 default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 label = "infra-releng"  # Label used for all issues created by this script
+story_points_field = "customfield_12310243" # JIRA issue field used for story points (this could be custom field)
 
 # Map the ticket state to JIRA project state
 # Recognizable states are:

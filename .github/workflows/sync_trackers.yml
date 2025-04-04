@@ -29,4 +29,4 @@ jobs:
     - name: Run the script
       run: |
         poetry install
-        poetry run jira_sync -v sync-tickets
+        poetry run jira_sync sync-tickets
