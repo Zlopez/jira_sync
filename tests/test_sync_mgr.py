@@ -130,7 +130,7 @@ class TestSyncManager:
             ) as reconcile_jira_forge_issues,
         ):
             retrieve_open_jira_issues.return_value = open_jira_issues = object()
-            filter_open_jira_issues_by_forge_repo.return_value = filtered_jira_issues = object()
+            filter_open_jira_issues_by_forge_repo.return_value = filtered_jira_issues = list()
             retrieve_forge_issues.return_value = forge_issues = object()
             matched_issues = {object()}
             unmatched_jira_issues = {object()}
