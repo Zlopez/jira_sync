@@ -60,12 +60,13 @@ class SyncManager:
         open_jira_issues = self.filter_open_jira_issues_by_forge_repo(
             self.retrieve_open_jira_issues()
         )
+        log.info("Retrieved %d open JIRA issues", len(open_jira_issues))
         forge_issues = self.retrieve_forge_issues()
 
         matched_issues, unmatched_jira_issues, unmatched_forge_issues = (
             self.match_jira_forge_issues(open_jira_issues, forge_issues)
         )
-        log.debug(
+        log.info(
             "=> %d matched, %d unmatched JIRA, %d unmatched forge issues",
             len(matched_issues),
             len(unmatched_jira_issues),
