@@ -220,7 +220,7 @@ class TestRepository(BaseTestRepository):
     def test_get_issues(self, repo_has_issues, success, needs_selector, retrieve_closed):
         repo = self.create_obj()
 
-        API_RESULT_PAGES = [[1, 2, 3], [4, 5, 6]]
+        API_RESULT_PAGES = [[{}, {}, {}], [{}, {}, {}]]
 
         if needs_selector:
             repo._api_result_selectors = {"issues": "issues"}
@@ -285,3 +285,37 @@ class TestRepository(BaseTestRepository):
         else:
             get_next_page.assert_called_once()
             get_issue_params.assert_called_once_with(retrieve_closed)
+
+    def test_get_issues_filter_pull_requests(self):
+        repo = self.create_obj()
+
+        API_RESULT_PAGES = [[{}, {}, {}], [{"pull_request": {}}, {}, {}]]
+        API_RESPONSES = [
+            MockResponse(
+                status_code=requests.codes.ok,
+                json=mock.Mock(return_value=api_result_page),
+            )
+            for api_result_page in API_RESULT_PAGES
+        ]
+
+        with (
+            mock.patch.object(repo, "get_issue_params") as get_issue_params,
+            mock.patch.object(repo, "get_next_page") as get_next_page,
+            mock.patch.object(repo, "normalize_issue") as normalize_issue,
+            mock.patch.object(requests, "get") as requests_get,
+        ):
+            get_issue_params.return_value = {}
+            get_next_page_retvals = [
+                {"url": f"https://api.example.net?page={i + 1}"}
+                for i in range(len(API_RESULT_PAGES))
+            ]
+            get_next_page.side_effect = get_next_page_retvals + [None]
+            requests_get.side_effect = API_RESPONSES
+            normalize_issue.side_effect = lambda x: x
+
+            issues = repo.get_issues()
+
+        # At least one attempt…
+        assert get_next_page.call_args_list[0] == mock.call(endpoint="issues", response=None)
+
+        assert len(issues) == 5
