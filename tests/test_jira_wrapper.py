@@ -30,6 +30,7 @@ TEST_JIRA_CONFIG = {
     "default_issue_type": "Story",
     "label": "label",
     "story_points_field": "story_points",
+    "external_url_field": "external_url",
     "statuses": {
         "new": "NEW",
         "assigned": "IN_PROGRESS",
@@ -147,8 +148,6 @@ class TestJIRA:
 
         with caplog.at_level("DEBUG"):
             retval = jira_obj.create_issue(
-                summary="summary",
-                description="description",
                 url="url",
                 labels=labels,
             )

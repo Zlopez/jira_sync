@@ -2,11 +2,12 @@
 
 [general.jira]
 instance_url = "https://issues.redhat.com"  # JIRA instance URL
-project = "CPE"  # Name of the project to sync tickets to
+project = "CLE"  # Name of the project to sync tickets to
 token = "$secrets.jira_token"  # API token to use for authentication
 default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
-label = "infra-releng"  # Label used for all issues created by this script
+label = "jira_sync"  # Label used for all issues created by this script
 story_points_field = "customfield_12310243" # JIRA issue field used for story points (this could be custom field)
+external_url_field = "customfield_12317242" # JIRA field used for external URL (this is used to match the JIRA issue with upstream issue)
 
 # Map the ticket state to JIRA project state
 # Recognizable states are:
@@ -18,7 +19,7 @@ story_points_field = "customfield_12310243" # JIRA issue field used for story po
 new = "New"
 assigned = "In Progress"
 blocked = "Blocked"
-closed = "Done"
+closed = "Closed"
 
 
 # Pagure configuration

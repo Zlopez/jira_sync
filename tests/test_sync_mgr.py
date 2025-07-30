@@ -221,44 +221,39 @@ class TestSyncManager:
             for issue in filtered_jira_issues
         )
 
-    @pytest.mark.parametrize("test_case", ("multi-line", "single-line", None))
+    @pytest.mark.parametrize("test_case", ("single-line", None))
     def test_get_full_url_from_jira_issue(self, test_case, sync_mgr):
         if not test_case:
             expected_url = None
         else:
             expected_url = "URL"
-        desc = expected_url
-        if test_case == "multi-line":
-            desc += "\n\nBOOP\n"
-        issue = mock.Mock(fields=mock.Mock(description=desc))
+        issue = mock.Mock(fields=mock.Mock(external_url=expected_url))
 
-        url = SyncManager.get_full_url_from_jira_issue(issue)
+        url = sync_mgr.get_full_url_from_jira_issue(issue)
 
         assert url == expected_url
 
-    def test_match_jira_forge_issues(self):
-        jira_issues = [
-            mock.Mock(fields=mock.Mock(description=f"URL{idx}\n\nSome descriptive text."))
-            for idx in range(10)
-        ]
+    def test_match_jira_forge_issues(self, sync_mgr):
+        jira_issues = [mock.Mock(fields=mock.Mock(external_url=f"URL{idx}")) for idx in range(10)]
 
+        # Set external URL field
         forge_issues = [mock.Mock(full_url=f"URL{idx}") for idx in range(5, 15)]
 
         matched_issues, unmatched_jira_issues, unmatched_forge_issues = (
-            SyncManager.match_jira_forge_issues(jira_issues, forge_issues)
+            sync_mgr.match_jira_forge_issues(jira_issues, forge_issues)
         )
 
         matched_urls = {f"URL{idx}" for idx in range(5, 10)}
         unmatched_urls = {f"URL{idx}" for idx in range(15) if not 5 <= idx < 10}
 
         assert all(
-            jira_issue.fields.description.startswith(forge_issue.full_url)
+            jira_issue.fields.external_url == forge_issue.full_url
             and forge_issue.full_url in matched_urls
             for jira_issue, forge_issue in matched_issues
         )
 
         assert all(
-            any(jira_issue.fields.description.startswith(url + "\n") for url in unmatched_urls)
+            any(jira_issue.fields.external_url == url for url in unmatched_urls)
             for jira_issue in unmatched_jira_issues
         )
 
@@ -296,7 +291,7 @@ class TestSyncManager:
                 for idx in range(2)
             ]
 
-        closed_jira_issue = mock.Mock(fields=mock.Mock(description="URL0\n\nThis is closed!"))
+        closed_jira_issue = mock.Mock(fields=mock.Mock(external_url="URL0"))
         sync_mgr._jira.get_issues_by_labels.side_effect = None
         sync_mgr._jira.get_issues_by_labels.return_value = [closed_jira_issue]
 
@@ -343,8 +338,6 @@ class TestSyncManager:
             sync_mgr._jira.get_issues_by_labels.return_value, forge_issues
         )
         mock_jira_create_issue.assert_called_once_with(
-            summary="Title 1",
-            description="Some content",
             url="URL1",
             labels=[sync_mgr._jira_config.label, "instance.io:repository"],
         )

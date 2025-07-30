@@ -17,6 +17,7 @@ EXPECTED_CONFIG = {
             "label": "label",
             "project": "Project",
             "story_points_field": "",
+            "external_url_field": "",
             "statuses": {
                 "assigned": "IN_PROGRESS",
                 "blocked": "BLOCKED",
