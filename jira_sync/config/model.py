@@ -22,6 +22,7 @@ class JiraConfig(BaseModel):
     default_issue_type: str
     label: str
     story_points_field: str = ""
+    external_url_field: str
 
     statuses: StatusesConfig
 
