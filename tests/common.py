@@ -23,6 +23,7 @@ class JiraAssignee(HashableModel):
 class JiraIssueFields(HashableModel):
     description: str | None = None
     assignee: JiraAssignee | None = None
+    external_url: str | None = None
     status: JiraStatus = JiraStatus()
     labels: tuple[str, ...] = ()
 
@@ -100,14 +101,14 @@ TEST_PAGURE_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["foo", "label", "pagure.io:namespace/test1"],
-                    "description": "https://pagure.io/namespace/test1/issue/4",
+                    "external_url": "https://pagure.io/namespace/test1/issue/4",
                     "status": {"name": "NEW"},
                 },
             },
             {
                 "fields": {
                     "labels": ["bar", "label", "pagure.io:test2"],
-                    "description": "https://pagure.io/test2/issue/2",
+                    "external_url": "https://pagure.io/test2/issue/2",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
@@ -115,21 +116,21 @@ TEST_PAGURE_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["label", "pagure.io:test2"],
-                    "description": "https://pagure.io/test2/issue/6",
+                    "external_url": "https://pagure.io/test2/issue/6",
                     "status": {"name": "DONE"},
                 },
             },
             {
                 "fields": {
                     "labels": ["label", "pagure.io:test2"],
-                    "description": "https://pagure.io/test2/issue/1",
+                    "external_url": "https://pagure.io/test2/issue/1",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
             {
                 "fields": {
                     "labels": ["label", "pagure.io:namespace/test1"],
-                    "description": None,
+                    "external_url": None,
                     "status": {"name": "CONFUSED"},
                 },
             },
@@ -137,7 +138,7 @@ TEST_PAGURE_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["label", "pagure.io:namespace/test1"],
-                    "description": "https://pagure.io/namespace/test1/issue/7",
+                    "external_url": "https://pagure.io/namespace/test1/issue/7",
                     "status": {"name": "MISSED_THE_BUS"},
                 },
             },
@@ -210,14 +211,14 @@ TEST_GITHUB_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["foo", "label", "github.com:org/test1"],
-                    "description": "https://github.com/org/test1/issues/4",
+                    "external_url": "https://github.com/org/test1/issues/4",
                     "status": {"name": "NEW"},
                 },
             },
             {
                 "fields": {
                     "labels": ["bar", "label", "github.com:test2"],
-                    "description": "https://github.com/test2/issues/2",
+                    "external_url": "https://github.com/test2/issues/2",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
@@ -225,21 +226,21 @@ TEST_GITHUB_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["label", "github.com:test2"],
-                    "description": "https://github.com/test2/issues/6",
+                    "external_url": "https://github.com/test2/issues/6",
                     "status": {"name": "DONE"},
                 },
             },
             {
                 "fields": {
                     "labels": ["label", "github.com:test2"],
-                    "description": "https://github.com/test2/issues/1",
+                    "external_url": "https://github.com/test2/issues/1",
                     "status": {"name": "IN_PROGRESS"},
                 },
             },
             {
                 "fields": {
                     "labels": ["label", "github.com:org/test1"],
-                    "description": None,
+                    "external_url": None,
                     "status": {"name": "CONFUSED"},
                 },
             },
@@ -247,7 +248,7 @@ TEST_GITHUB_JIRA_ISSUES = [
             {
                 "fields": {
                     "labels": ["label", "github.com:org/test1"],
-                    "description": "https://github.com/org/test1/issues/7",
+                    "external_url": "https://github.com/org/test1/issues/7",
                     "status": {"name": "MISSED_THE_BUS"},
                 },
             },
@@ -272,8 +273,6 @@ def mock_jira__get_issues_by_labels(labels: str | Collection[str], closed=False)
 
 def mock_jira__create_issue(
     context: dict,
-    summary: str,
-    description: str,
     url: str,
     labels: Collection[str] | str,
 ):
@@ -285,10 +284,10 @@ def mock_jira__create_issue(
     return JiraIssue.model_validate(
         {
             "key": f"CPE-{id_}",
-            "summary": summary,
+            "external_url": url,
             "labels": labels,
             "fields": {
-                "description": f"{url}\n\n{description}",
+                "external_url": f"{url}",
                 "status": {"name": "NEW"},
             },
         }
@@ -431,6 +430,7 @@ def gen_test_config(*, instances_enabled, repositories_enabled):
                 "default_issue_type": "Story",
                 "label": "label",
                 "story_points_field": "story_points",
+                "external_url_field": "external_url",
                 "statuses": {
                     "new": "NEW",
                     "assigned": "IN_PROGRESS",

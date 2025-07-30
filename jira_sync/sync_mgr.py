@@ -138,25 +138,18 @@ class SyncManager:
             if any(label in self.jira_repo_labels for label in issue.fields.labels)
         ]
 
-    @staticmethod
-    def get_full_url_from_jira_issue(jira_issue: JiraIssue) -> str | None:
+    def get_full_url_from_jira_issue(self, jira_issue: JiraIssue) -> str | None:
         """Extract issue URL on the forge from a JIRA issue.
 
         :param jira_issue: The JIRA issue from which to extract the URL
 
         :return: The URL, or None if the JIRA description is empty
         """
-        full_url = desc = jira_issue.fields.description
-        if desc:
-            try:
-                full_url, _ = desc.split("\n", 1)
-            except ValueError:
-                pass
+        full_url = getattr(jira_issue.fields, self._jira_config.external_url_field, None)
         return full_url
 
-    @classmethod
     def match_jira_forge_issues(
-        cls, jira_issues: Collection[JiraIssue], forge_issues: Collection[Issue]
+        self, jira_issues: Collection[JiraIssue], forge_issues: Collection[Issue]
     ) -> tuple[set[MatchedIssue], set[JiraIssue], set[Issue]]:
         """Match JIRA issues with those from forges.
 
@@ -172,7 +165,7 @@ class SyncManager:
         unmatched_forge_issues = set(forge_issues)
 
         for jira_issue in jira_issues:
-            full_url = cls.get_full_url_from_jira_issue(jira_issue)
+            full_url = self.get_full_url_from_jira_issue(jira_issue)
             match = None
             for forge_issue in unmatched_forge_issues:
                 if forge_issue.full_url == full_url:
@@ -243,8 +236,6 @@ class SyncManager:
             instance_name = forge_issue.repository.instance.name
             repo_name = forge_issue.repository.name
             jira_issue = self._jira.create_issue(
-                summary=forge_issue.title,
-                description=forge_issue.content,
                 url=forge_issue.full_url,
                 labels=[self._jira_config.label, f"{instance_name}:{repo_name}"],
             )

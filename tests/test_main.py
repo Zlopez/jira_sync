@@ -174,16 +174,12 @@ def test_sync_tickets(
     new_jira_ids = [len(TEST_JIRA_ISSUES) + 1, len(TEST_JIRA_ISSUES) + 2]
     pagure_issue = TEST_PAGURE_ISSUES[2]
     jira.create_issue.assert_any_call(
-        summary=pagure_issue["title"],
-        description=pagure_issue["content"],
         url=pagure_issue["full_url"],
         labels=[jira_config["label"], f"pagure.io:{pagure_issue['repo']}"],
     )
     assert "Creating JIRA ticket from https://pagure.io/namespace/test1/issue/3" in caplog.text
     github_issue = TEST_GITHUB_ISSUES[2]
     jira.create_issue.assert_any_call(
-        summary=github_issue["title"],
-        description=github_issue["body"],
         url=github_issue["html_url"],
         labels=[jira_config["label"], f"github.com:{github_issue['repo']}"],
     )
