@@ -73,5 +73,5 @@ def sync_tickets(config_file: str, run_mode: JiraRunMode):
     try:
         sync_mgr = SyncManager(config=config, run_mode=run_mode)
     except JIRAError as e:
-        raise click.ClickException(e.text) from e
+        raise click.ClickException(str(e.text)) from e
     sync_mgr.sync_issues()
