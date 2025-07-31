@@ -1,11 +1,11 @@
 # JIRA sync script
 
 This script is created to sync issues from various ticket trackers to JIRA in unified way.
-Supports https://pagure.io/ with another sources planned.
+Supports [Pagure](https://pagure.io/pagure), [GitHub](https://github.com/) and [GitLab](https://gitlab.com/).
 
 ## Features
 
-* Sync tickets from Pagure and GitHub to JIRA
+* Sync tickets from Pagure, GitHub and GitLab to JIRA
 * Check for closed tickets X days ago
 * Add story points to JIRA ticket based on labels on original tickets
 * Add assignee to ticket from map

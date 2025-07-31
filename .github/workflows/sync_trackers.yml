@@ -25,6 +25,8 @@ jobs:
         cp .github/workflows/pagureio_jira_usermap.toml pagureio_jira_usermap.toml
         sed -i -e "s|\$secrets.githubcom_token|$GITHUBCOM_TOKEN|g" config.toml
         cp .github/workflows/githubcom_jira_usermap.toml githubcom_jira_usermap.toml
+        sed -i -e "s|\$secrets.gitlabcom_token|$GITLABCOM_TOKEN|g" config.toml
+        cp .github/workflows/gitlabcom_jira_usermap.toml gitlabcom_jira_usermap.toml
 
     - name: Run the script
       run: |

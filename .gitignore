@@ -164,3 +164,4 @@ cython_debug/
 config.toml
 pagureio_jira_usermap.toml
 githubcom_jira_usermap.toml
+gitlabcom_jira_usermap.toml
