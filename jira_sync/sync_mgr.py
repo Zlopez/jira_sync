@@ -224,6 +224,7 @@ class SyncManager:
 
         log.info("Retrieving list of closed JIRA issues…")
         closed_jira_issues = self._jira.get_issues_by_labels(self._jira_config.label, closed=True)
+        log.info("Retrieved %d closed JIRA issues", len(closed_jira_issues))
 
         log.info("Matching closed JIRA issues with unmatched forge issues…")
         matched_issues, unmatched_jira_issues, unmatched_forge_issues = (

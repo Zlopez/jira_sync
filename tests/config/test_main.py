@@ -106,6 +106,45 @@ EXPECTED_CONFIG = {
             "type": "github",
             "usermap": {"github_user1": "jira_user1", "github_user2": "jira_user2"},
         },
+        "gitlab.com": {
+            "blocked_label": "blocked",
+            "enabled": True,
+            "token": None,
+            "instance_api_url": "https://gitlab.com/api/v4",
+            "instance_url": "https://gitlab.com/",
+            "label": None,
+            "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "retrieve_closed_days_ago": 0,
+            "query_repositories": [
+                {
+                    "blocked_label": None,
+                    "enabled": True,
+                    "label": "test",
+                    "org": "CentOS",
+                    "labels_to_story_points": None,
+                },
+            ],
+            "repositories": {
+                "org/test1": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": None,
+                    "labels_to_story_points": None,
+                },
+                "test2": {
+                    "blocked_label": "blocked",
+                    "enabled": True,
+                    "label": "test",
+                    "labels_to_story_points": {
+                        "little-work": 1,
+                        "medium-work": 5,
+                        "lots-of-work": 10,
+                    },
+                },
+            },
+            "type": "gitlab",
+            "usermap": {"gitlab_user1": "jira_user1", "gitlab_user2": "jira_user2"},
+        },
     },
 }
 
@@ -127,11 +166,12 @@ def test_load_configuration(usermap_type: str, config_source: str, param_type: t
     usermaps = {
         "pagure.io": {"pagure_user1": "jira_user1", "pagure_user2": "jira_user2"},
         "github.com": {"github_user1": "jira_user1", "github_user2": "jira_user2"},
+        "gitlab.com": {"gitlab_user1": "jira_user1", "gitlab_user2": "jira_user2"},
     }
     usermap_files = {}
 
     if usermap_type != "direct":
-        for instance_name in ("pagure.io", "github.com"):
+        for instance_name in ("pagure.io", "github.com", "gitlab.com"):
             usermap_files[instance_name] = tmp_path / f"{instance_name}_jira_usermap.toml"
             with usermap_files[instance_name].open("w") as fp:
                 tomlkit.dump(usermaps[instance_name], fp)

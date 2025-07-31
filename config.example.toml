@@ -23,7 +23,7 @@ blocked = "BLOCKED"
 closed = "DONE"
 
 [instances."pagure.io"]
-type = "pagure"
+type = "pagure" # Type of instance
 enabled = true  # Enable/Disable instance
 instance_url = "https://pagure.io/"
 blocked_label = "blocked"  # Label that is marking blocked issues
@@ -34,10 +34,10 @@ labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0
 
-# Alternatively, map directly:
-# [instances."pagure.io".usermap]
-# fedora_user1 = "jira_user1"
-# fedora_user2 = "jira_user2"
+# Alternatively, map users directly:
+#[instances."pagure.io".usermap]
+#fedora_user1 = "jira_user1"
+#fedora_user2 = "jira_user2"
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"
@@ -50,17 +50,18 @@ label = "test"
 "test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}
 
 [instances."github.com"]
-type = "github"
-enabled = true
+type = "github" # Type of instance
+enabled = true # Enable/Disable instance
 instance_url = "https://github.com"
 instance_api_url = "https://api.github.com"
-blocked_label = "blocked"
+blocked_label = "blocked" # Label that is marking blocked issues
 # converts specific label to story point
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0
 
+# Alternatively, map users directly:
 [instances."github.com".usermap]
 github_user1 = "jira_user1"
 github_user2 = "jira_user2"
@@ -71,4 +72,32 @@ label = "test"
 
 [instances."github.com".repositories]
 "org/test1" = {}
+"test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}
+
+[instances."gitlab.com"]
+type = "gitlab" # Type of instance
+enabled = true # Enable/Disable instance
+instance_url = "https://gitlab.com"
+instance_api_url = "https://gitlab.com/api/v4"
+blocked_label = "blocked" # Label that is marking blocked issues
+usermap = "gitlab_jira_usermap.toml"  # External file, can be reused
+# converts specific label to story point
+labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 0
+
+# Alternatively, map users directly:
+#[instances."gitlab.com".usermap]
+#gitlab_user1 = "jira_user1"
+#gitlab_user2 = "jira_user2"
+
+[[instances."gitlab.com".query_repositories]]
+org = "CentOS" # Organization to query repositories from
+# Pattern only applies to the repository name
+# pattern = "*infra*"
+label = "test"
+
+[instances."gitlab.com".repositories]
+"org/test1" = {} # Repo to retrieve issues from
 "test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}

@@ -69,3 +69,20 @@ org = "fedora-infra"
 
 [[instances."github.com".query_repositories]]
 org = "CentOS"
+
+# GitLab configuration
+[instances."gitlab.com"]
+type = "gitlab"
+enabled = true
+instance_url = "https://gitlab.com"
+instance_api_url = "https://gitlab.com/api/v4"
+token = "$secrets.gitlabcom_token"
+blocked_label = "blocked"
+usermap = "gitlabcom_jira_usermap.toml"
+labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 10 }
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 3
+
+[instances."gitlab.com".repositories]
+"CentOS/infra/tracker" = {}

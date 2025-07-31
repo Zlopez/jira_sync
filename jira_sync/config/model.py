@@ -94,7 +94,24 @@ class GitHubConfig(InstanceConfigBase):
     query_repositories: list[GitHubQueryRepoSpec] = []
 
 
-InstanceConfig = PagureConfig | GitHubConfig
+class GitLabQueryRepoSpecOrg(QueryRepoSpec):
+    org: str
+
+
+class GitLabQueryRepoSpecUser(QueryRepoSpec):
+    user: str
+
+
+GitLabQueryRepoSpec = GitLabQueryRepoSpecOrg | GitLabQueryRepoSpecUser
+
+
+class GitLabConfig(InstanceConfigBase):
+    type: Literal["gitlab"]
+    instance_api_url: HttpUrl
+    query_repositories: list[GitLabQueryRepoSpec] = []
+
+
+InstanceConfig = PagureConfig | GitHubConfig | GitLabConfig
 InstancesConfig = dict[str, InstanceConfig]
 
 
