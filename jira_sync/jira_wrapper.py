@@ -108,16 +108,12 @@ class JIRA:
     def create_issue(
         self,
         *,
-        summary: str,
-        description: str,
         url: str,
         labels: Collection[str] | str | None = None,
     ) -> Issue | None:
         """
         Create a new issue in JIRA.
 
-        :param summary: Name of the ticket
-        :param description: Description of the ticket
         :param url: URL to add to url field, it is also added to description
         :param labels: Label(s) for the issue, if any
 
@@ -132,8 +128,7 @@ class JIRA:
 
         issue_dict: dict[str, Any] = {
             "project": {"key": self.jira_config.project},
-            "summary": summary,
-            "description": url + "\n\n" + description,
+            "summary": url,
             "issuetype": {"name": self.jira_config.default_issue_type},
             "labels": labels if labels else [],
         }
