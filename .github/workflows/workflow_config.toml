@@ -70,6 +70,9 @@ org = "fedora-infra"
 [[instances."github.com".query_repositories]]
 org = "CentOS"
 
+[[instances."github.com".repostitories]]
+"Zlopez/jira_sync" = { label = "cpe" }
+
 # GitLab configuration
 [instances."gitlab.com"]
 type = "gitlab"
