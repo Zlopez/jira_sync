@@ -431,6 +431,11 @@ def gen_test_config(*, instances_enabled, repositories_enabled):
                 "label": "label",
                 "story_points_field": "story_points",
                 "external_url_field": "external_url",
+                "blocked_field": "blocked_field",
+                "blocked_values": {
+                    "true": 1,
+                    "false": 0,
+                },
                 "statuses": {
                     "new": "NEW",
                     "assigned": "IN_PROGRESS",

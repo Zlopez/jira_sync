@@ -31,6 +31,11 @@ TEST_JIRA_CONFIG = {
     "label": "label",
     "story_points_field": "story_points",
     "external_url_field": "external_url",
+    "blocked_field": "blocked",
+    "blocked_values": {
+        "true": 1,
+        "false": 0,
+    },
     "statuses": {
         "new": "NEW",
         "assigned": "IN_PROGRESS",
@@ -316,6 +321,45 @@ class TestJIRA:
         else:
             assert f"KEY: Adding story points: {test_case}" in caplog.text
             assert output == {"story_points": [{"set": test_case}]}
+
+    def test_blocked_field_not_set(self, jira_obj, caplog):
+        issue = mock.Mock(key="KEY")
+        changes = {}
+
+        old_value = jira_obj.jira_config.blocked_field
+        jira_obj.jira_config.blocked_field = ""
+
+        with caplog.at_level("DEBUG"):
+            output = jira_obj.add_blocked_status(issue, True, changes)
+
+        assert "Blocked field in jira is not set. Skipping adding blocked status." in caplog.text
+        assert output == {}
+
+        # Set the story_point_field value back
+        jira_obj.jira_config.blocked_field = old_value
+
+    @pytest.mark.parametrize("test_case", (False, True))
+    def test_blocked(self, test_case, run_mode, jira_obj, caplog):
+        not_blocked = test_case is False
+        blocked = test_case is True
+
+        issue = mock.Mock(key="KEY")
+        issue.fields.blocked = {"id": "0"}
+        changes = {}
+
+        with caplog.at_level("DEBUG"):
+            output = jira_obj.add_blocked_status(issue, test_case, changes)
+
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
+            return
+
+        if not_blocked:
+            assert "KEY: blocked field already set to correct value. Skipping." in caplog.text
+            assert output == {}
+        elif blocked:
+            assert "KEY: Filling blocked field: {'id': '1'}" in caplog.text
+            assert output == {"blocked": [{"set": {"id": "1"}}]}
 
     @pytest.mark.parametrize("test_case", ({}, {"field": "value"}))
     def test_issue_update(self, test_case, run_mode, jira_obj, caplog):

@@ -8,6 +8,12 @@ default_issue_type = "Story"  # Issue type to use when creating new issue in JIR
 label = "jira_sync"  # Label used for all issues created by this script
 story_points_field = "customfield_12310243" # JIRA issue field used for story points (this could be custom field)
 external_url_field = "customfield_12317242" # JIRA field used for external URL (this is used to match the JIRA issue with upstream issue)
+blocked_field = "customfield_12316543" # JIRA issue field used for marking ticket as blocked
+
+# Map the boolean values to JIRA field values
+[general.jira.blocked_values]
+true = 14656
+false = 14657
 
 # Map the ticket state to JIRA project state
 # Recognizable states are:
@@ -18,7 +24,7 @@ external_url_field = "customfield_12317242" # JIRA field used for external URL (
 [general.jira.statuses]
 new = "New"
 assigned = "In Progress"
-blocked = "Blocked"
+blocked = "In Progress"
 closed = "Closed"
 
 
