@@ -235,6 +235,29 @@ class JIRA:
         log.debug("%s: Adding story points: %d", issue.key, story_points)
         return changes | {self.jira_config.story_points_field: [{"set": story_points}]}
 
+    def add_blocked_status(self, issue: Issue, blocked: bool, changes: dict) -> dict:
+        """
+        Add blocked state to issue.
+
+        :param issue: Issue object
+        :param blocked: True/False corresponding to blocked state
+        :param changes: Dictionary containing all the changes for the issue
+
+        :return: Updated dictionary of changes
+        """
+        # Convert boolean to values used by JIRA
+        blocked = dict(self.jira_config.blocked_values)[str(blocked).lower()]
+        if not self.jira_config.blocked_field:
+            log.debug("Blocked field in jira is not set. Skipping adding blocked status.")
+            return changes
+
+        if getattr(issue.fields, self.jira_config.blocked_field) == {"id": str(blocked)}:
+            log.debug("%s: blocked field already set to correct value. Skipping.", issue.key)
+            return changes
+
+        log.debug("%s: Filling blocked field: %s", issue.key, {"id": str(blocked)})
+        return changes | {self.jira_config.blocked_field: [{"set": {"id": str(blocked)}}]}
+
     def update_issue(self, issue: Issue, changes: dict) -> None:
         """
         Update fields on the issue.

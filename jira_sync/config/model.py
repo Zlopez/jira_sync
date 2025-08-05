@@ -15,6 +15,11 @@ class StatusesConfig(BaseModel):
     closed: str
 
 
+class BlockValuesConfig(BaseModel):
+    true: int
+    false: int
+
+
 class JiraConfig(BaseModel):
     instance_url: HttpUrl
     project: str
@@ -23,6 +28,9 @@ class JiraConfig(BaseModel):
     label: str
     story_points_field: str = ""
     external_url_field: str
+    blocked_field: str
+
+    blocked_values: BlockValuesConfig
 
     statuses: StatusesConfig
 
