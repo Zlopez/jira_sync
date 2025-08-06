@@ -3,6 +3,7 @@ Manage synchronization between JIRA and upsteam git forges.
 """
 
 import logging
+import time
 from collections.abc import Collection
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
@@ -321,4 +322,7 @@ class SyncManager:
             changes = self._jira.add_blocked_status(
                 jira_issue, forge_issue.status == IssueStatus.blocked, changes
             )
+            # Let's wait one second between updates
+            # to prevent reaching rate limit
+            time.sleep(1)
             self._jira.update_issue(jira_issue, changes)
