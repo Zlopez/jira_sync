@@ -332,7 +332,7 @@ class TestSyncManager:
 
         assert "Creating/reopening JIRA issues for unmatched forge issues" in caplog.text
         sync_mgr._jira.get_issues_by_labels.assert_called_once_with(
-            sync_mgr._jira_config.label, closed=True
+            sync_mgr._jira_config.label, ["URL0", "URL1"], closed=True
         )
         mock_match_jira_forge_issues.assert_called_once_with(
             sync_mgr._jira.get_issues_by_labels.return_value, forge_issues

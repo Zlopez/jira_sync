@@ -216,8 +216,11 @@ class SyncManager:
 
         log.info("Creating/reopening JIRA issues for unmatched forge issues…")
 
+        forge_issues_urls = [issue.full_url for issue in forge_issues]
         log.info("Retrieving list of closed JIRA issues…")
-        closed_jira_issues = self._jira.get_issues_by_labels(self._jira_config.label, closed=True)
+        closed_jira_issues = self._jira.get_issues_by_labels(
+            self._jira_config.label, forge_issues_urls, closed=True
+        )
         log.info("Retrieved %d closed JIRA issues", len(closed_jira_issues))
 
         log.info("Matching closed JIRA issues with unmatched forge issues…")
