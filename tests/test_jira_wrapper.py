@@ -344,13 +344,19 @@ class TestJIRA:
         # Set the story_point_field value back
         jira_obj.jira_config.blocked_field = old_value
 
-    @pytest.mark.parametrize("test_case", (False, True))
+    @pytest.mark.parametrize("test_case", (False, True, "Empty"))
     def test_blocked(self, test_case, run_mode, jira_obj, caplog):
         not_blocked = test_case is False
         blocked = test_case is True
+        # When the blocked field is empty
+        blocked_empty = test_case == "Empty"
 
         issue = mock.Mock(key="KEY")
-        issue.fields.blocked = {"id": "0"}
+        if blocked_empty:
+            issue.fields.blocked = {}
+            test_case = True
+        else:
+            issue.fields.blocked = {"id": "0"}
         changes = {}
 
         with caplog.at_level("DEBUG"):
@@ -363,7 +369,7 @@ class TestJIRA:
         if not_blocked:
             assert "KEY: blocked field already set to correct value. Skipping." in caplog.text
             assert output == {}
-        elif blocked:
+        elif blocked or blocked_empty:
             assert "KEY: Filling blocked field: {'id': '1'}" in caplog.text
             assert output == {"blocked": [{"set": {"id": "1"}}]}
 

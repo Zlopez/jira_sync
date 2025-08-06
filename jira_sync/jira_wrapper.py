@@ -259,9 +259,11 @@ class JIRA:
             log.debug("Blocked field in jira is not set. Skipping adding blocked status.")
             return changes
 
-        if getattr(issue.fields, self.jira_config.blocked_field) == {"id": str(blocked)}:
-            log.debug("%s: blocked field already set to correct value. Skipping.", issue.key)
-            return changes
+        value = getattr(issue.fields, self.jira_config.blocked_field)
+        if "id" in value:
+            if value["id"] == str(blocked):
+                log.debug("%s: blocked field already set to correct value. Skipping.", issue.key)
+                return changes
 
         log.debug("%s: Filling blocked field: %s", issue.key, {"id": str(blocked)})
         return changes | {self.jira_config.blocked_field: [{"set": {"id": str(blocked)}}]}
