@@ -260,15 +260,21 @@ TEST_GITHUB_JIRA_ISSUES = [
 TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES
 
 
-def mock_jira__get_issues_by_labels(labels: str | Collection[str], closed=False):
+def mock_jira__get_issues_by_labels(
+    labels: str | Collection[str], issues_url: Collection[str] = [], closed=False
+):
     if isinstance(labels, str):
         labels = [labels]
-    return [
+    issues = [
         issue
         for issue in TEST_JIRA_ISSUES
         if any(label in issue.fields.labels for label in labels)
         and (issue.fields.status.name == "DONE") == closed
     ]
+    if issues_url:
+        issues = [issue for issue in issues if issue.fields.external_url in (issues_url)]
+
+    return issues
 
 
 def mock_jira__create_issue(

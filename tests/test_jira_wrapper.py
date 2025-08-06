@@ -101,7 +101,7 @@ class TestJIRA:
 
         if run_mode != JiraRunMode.DRY_RUN:
             issue = mock.Mock()
-            issue.fields.description = f"{ISSUE_URL}\nSome\nmore\ntext."
+            issue.fields.external_url = f"{ISSUE_URL}"
             jira_obj.jira.search_issues.return_value = [issue]
 
         if labels_as_string:
@@ -109,7 +109,12 @@ class TestJIRA:
         else:
             labels = ["labels"]
 
-        retval = jira_obj.get_issues_by_labels(labels=labels, closed=closed)
+        if closed:
+            retval = jira_obj.get_issues_by_labels(
+                labels=labels, issues_url=[ISSUE_URL], closed=closed
+            )
+        else:
+            retval = jira_obj.get_issues_by_labels(labels=labels, closed=closed)
 
         if run_mode == JiraRunMode.DRY_RUN:
             assert jira_obj._jira is None
@@ -127,6 +132,7 @@ class TestJIRA:
         assert 'labels IN ("labels")' in snippets
         if closed:
             assert 'status IN ("Done", "Closed")' in snippets
+            assert f'"External Issue URL" IN ("{ISSUE_URL}")' in snippets
         else:
             assert 'status NOT IN ("Done", "Closed")' in snippets
 

@@ -71,12 +71,13 @@ class JIRA:
         return self._jira
 
     def get_issues_by_labels(
-        self, labels: str | Collection[str], closed: bool = False
+        self, labels: str | Collection[str], issues_url: Collection[str] = [], closed: bool = False
     ) -> list[Issue]:
         """
         Retrieve issues for the specified labels.
 
         :param labels: Labels to retrieve the issues by
+        :param issues_url: URLs to match in external url field
         :param closed: Whether to return closed issues
 
         :return: List of issues
@@ -87,6 +88,12 @@ class JIRA:
         if self.run_mode == JiraRunMode.DRY_RUN:
             log.info("Skipping getting JIRA issues by labels: %s", ", ".join(labels))
             return []
+
+        urls_filter = ""
+
+        if issues_url:
+            urls = ", ".join(f'"{url}"' for url in issues_url)
+            urls_filter = f' AND "External Issue URL" IN ({urls})'
 
         labels_str = ", ".join(f'"{label}"' for label in labels)
 
@@ -99,7 +106,8 @@ class JIRA:
             jira.client.ResultList[Issue],
             self.jira.search_issues(
                 f'project = "{self.jira_config.project}" AND labels IN ({labels_str})'
-                + f" AND {status_blurb}",
+                + f" AND {status_blurb}"
+                + urls_filter,
                 maxResults=0,
             ),
         )

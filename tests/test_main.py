@@ -143,7 +143,7 @@ def test_sync_tickets(
 
     assert jira.get_issues_by_labels.call_args_list == [
         mock.call("label"),
-        mock.call("label", closed=True),
+        mock.call("label", mock.ANY, closed=True),
     ]
     assert all(f"Querying repository pagure.io:{name}" in caplog.text for name in TEST_PAGURE_REPOS)
     assert all(
