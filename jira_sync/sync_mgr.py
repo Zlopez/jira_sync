@@ -241,7 +241,12 @@ class SyncManager:
             repo_name = forge_issue.repository.name
             jira_issue = self._jira.create_issue(
                 url=forge_issue.full_url,
-                labels=[self._jira_config.label, f"{instance_name}:{repo_name}"],
+                labels=[
+                    self._jira_config.label,
+                    f"{instance_name}:{repo_name}",
+                    f"{instance_name}",
+                    f"{repo_name}",
+                ],
             )
             if not jira_issue:
                 log.error("Couldn’t create new JIRA issue from '%s'", forge_issue.full_url)
