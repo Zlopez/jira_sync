@@ -339,7 +339,12 @@ class TestSyncManager:
         )
         mock_jira_create_issue.assert_called_once_with(
             url="URL1",
-            labels=[sync_mgr._jira_config.label, "instance.io:repository"],
+            labels=[
+                sync_mgr._jira_config.label,
+                "instance.io:repository",
+                "instance.io",
+                "repository",
+            ],
         )
 
     @pytest.mark.parametrize("testcase", ("usermap-key", "usermap-email"))
