@@ -43,7 +43,7 @@ retrieve_closed_days_ago = 3
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"
-label = "cpe"  # Label marking issues to by synchronized
+label = "cpe"  # Label marking issues to be synchronized
 
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
@@ -54,8 +54,21 @@ label = "cpe"  # Label marking issues to by synchronized
 "fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
 "fedora-infra/forgejo-deployment" = {}
 "fedora-infra/infrastructure-projects" = {}
-"fedora-qa" = {}
 "fedora-infra/arc" = {}
+"fedora-easy-karma" = {}
+"fedora_nightlies" = {}
+"fedora-qa" = {}
+"fedora-qa/blockerbugs" = {}
+"fedora-qa/check-compose" = {}
+"fedora-qa/createhdds" = {}
+"fedora-qa/fedora_openqa" = {}
+"fedora-qa/os-autoinst-distri-fedora" = {}
+"fedora-qa/qa-docs" = {}
+"fedora-qa/qa-misc" = {}
+"fedora-qa/qa-stats" = {}
+"fedora-qa/relval" = {}
+"fedora-qa/relvalconsumer" = {}
+"fedora-qa/testdays-web" = {}
 
 # GitHub configuration
 [instances."github.com"]
