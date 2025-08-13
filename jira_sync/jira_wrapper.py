@@ -109,6 +109,7 @@ class JIRA:
                 + f" AND {status_blurb}"
                 + urls_filter,
                 maxResults=0,
+                use_post=True,
             ),
         )
         return issues
