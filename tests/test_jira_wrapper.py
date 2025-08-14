@@ -384,4 +384,4 @@ class TestJIRA:
             assert "KEY: Nothing to update. Skipping." in caplog.text
             issue.update.assert_not_called()
         else:
-            issue.update.assert_called_once_with(update=test_case, notify=False)
+            issue.update.assert_called_once_with(update=test_case)

@@ -285,4 +285,4 @@ class JIRA:
 
         log.info("%s: Updating ticket with '%s'", issue.key, changes)
 
-        issue.update(update=changes, notify=False)
+        issue.update(update=changes)
