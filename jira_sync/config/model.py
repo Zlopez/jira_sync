@@ -120,7 +120,23 @@ class GitLabConfig(InstanceConfigBase):
     query_repositories: list[GitLabQueryRepoSpec] = []
 
 
-InstanceConfig = PagureConfig | GitHubConfig | GitLabConfig
+class ForgejoQueryRepoSpecOrg(QueryRepoSpec):
+    org: str
+
+
+class ForgejoQueryRepoSpecUser(QueryRepoSpec):
+    user: str
+
+
+ForgejoQueryRepoSpec = ForgejoQueryRepoSpecOrg | ForgejoQueryRepoSpecUser
+
+
+class ForgejoConfig(InstanceConfigBase):
+    type: Literal["forgejo"]
+    query_repositories: list[ForgejoQueryRepoSpec] = []
+
+
+InstanceConfig = PagureConfig | GitHubConfig | GitLabConfig | ForgejoConfig
 InstancesConfig = dict[str, InstanceConfig]
 
 

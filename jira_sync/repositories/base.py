@@ -168,10 +168,11 @@ class Repository(APIBase):
                 else:
                     partial_issues = api_result
 
-                # GitHub returns both pull requests and issues
-                # Filter out the pull requests
+                # Filter out the pull requests:
+                # GitHub returns both pull requests and issues, Forgejo always returns a
+                # `pull_request` field, which is null/None for issues.
                 for issue in partial_issues:
-                    if "pull_request" not in issue:
+                    if not issue.get("pull_request"):
                         issues.append(self.normalize_issue(issue))
             elif first_call and response.status_code == requests.codes.not_found:
                 # Pagure repos without issues enabled can’t be detected early, so we bow out

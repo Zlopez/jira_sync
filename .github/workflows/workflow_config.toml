@@ -109,3 +109,21 @@ retrieve_closed_days_ago = 3
 
 [instances."gitlab.com".repositories]
 "CentOS/infra/tracker" = {}
+
+# Forgejo configuration for codeberg.org
+[instances."codeberg.org"]
+type = "forgejo"
+enabled = true
+instance_url = "https://codeberg.org"
+instance_api_url = "https://codeberg.org"
+token = "$secrets.codebergorg_token"
+blocked_label = "blocked"
+usermap = "codebergorg_jira_usermap.toml"
+labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 10 }
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 3
+
+[[instances."codeberg.org".query_repositories]]
+org = "fedora"
+label = "cle"
