@@ -19,6 +19,7 @@ jobs:
       env:
         JIRA_TOKEN: ${{ secrets.jira_token }}
         GITHUBCOM_TOKEN: ${{ secrets.githubcom_token }}
+        # CODEBERGORG_TOKEN: ${{ secrets.codebergorg_token }}
       run: |
         cp .github/workflows/workflow_config.toml config.toml
         sed -i -e "s|\$secrets.jira_token|$JIRA_TOKEN|g" config.toml
@@ -27,6 +28,8 @@ jobs:
         cp .github/workflows/githubcom_jira_usermap.toml githubcom_jira_usermap.toml
         sed -i -e "s|\$secrets.gitlabcom_token|$GITLABCOM_TOKEN|g" config.toml
         cp .github/workflows/gitlabcom_jira_usermap.toml gitlabcom_jira_usermap.toml
+        # sed -i -e "s|\$secrets.codebergorg_token|$CODEBERGORG_TOKEN|g" config.toml
+        cp .github/workflows/codebergorg_jira_usermap.toml codebergorg_jira_usermap.toml
 
     - name: Run the script
       run: |
