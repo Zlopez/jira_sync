@@ -289,7 +289,7 @@ class TestRepository(BaseTestRepository):
     def test_get_issues_filter_pull_requests(self):
         repo = self.create_obj()
 
-        API_RESULT_PAGES = [[{}, {}, {}], [{"pull_request": {}}, {}, {}]]
+        API_RESULT_PAGES = [[{}, {}, {}], [{"pull_request": {"some": "thing"}}, {}, {}]]
         API_RESPONSES = [
             MockResponse(
                 status_code=requests.codes.ok,

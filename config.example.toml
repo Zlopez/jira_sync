@@ -108,3 +108,23 @@ label = "test"
 [instances."gitlab.com".repositories]
 "org/test1" = {} # Repo to retrieve issues from
 "test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}
+
+[instances."codeberg.org"]
+type = "forgejo"
+enabled = true
+instance_url = "https://codeberg.org"
+# instance_api_url = "https://codeberg.org"
+blocked_label = "blocked"
+usermap = "codebergorg_jira_usermap.toml"
+labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# retrieve also closed tickets that were closed in last X days
+# if set to 0, only retrieves open tickets
+retrieve_closed_days_ago = 0
+
+[[instances."codeberg.org".query_repositories]]
+org = "fedora"
+label = "test"
+
+[instances."codeberg.org".repositories]
+"org/test1" = {}
+"test2" = {label = "test", labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }}
