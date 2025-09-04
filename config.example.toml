@@ -113,7 +113,7 @@ label = "test"
 type = "forgejo"
 enabled = true
 instance_url = "https://codeberg.org"
-# instance_api_url = "https://codeberg.org"
+# instance_api_url = "https://codeberg.org/api/v1"
 blocked_label = "blocked"
 usermap = "codebergorg_jira_usermap.toml"
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
