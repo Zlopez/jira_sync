@@ -48,15 +48,18 @@ label = "cpe"  # Label marking issues to be synchronized
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
 # When label is set, only tickets with this label will be covered
+"Fedora-Council/council-docs" = {}
+"Fedora-Council/tickets" = {}
+"fedora-docs" = {}
+"fedora-docs/quick-docs" = {}
 "fedora-infrastructure" = {}
 "releng" = {}
-"centos-infra" = {}
 "fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
-"fedora-infra/forgejo-deployment" = {}
 "fedora-infra/infrastructure-projects" = {}
 "fedora-infra/arc" = {}
 "fedora-easy-karma" = {}
 "fedora_nightlies" = {}
+"fedora-pdr" = {}
 "fedora-qa" = {}
 "fedora-qa/blockerbugs" = {}
 "fedora-qa/check-compose" = {}
@@ -91,6 +94,9 @@ org = "fedora-infra"
 org = "CentOS"
 
 [instances."github.com".repositories]
+"neoave/mrack" = {}
+"os-autoinst/openQA-python-client" = {}
+"temtee/tmt" = {}
 "Zlopez/jira_sync" = { label = "cpe" }
 
 # GitLab configuration
@@ -107,8 +113,18 @@ labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 1
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
 
+[[instances."gitlab.com".query_repositories]]
+org = "fedora/design"
+label = "cle"
+
+[[instances."gitlab.com".query_repositories]]
+org = "fedora/docs"
+label = "cle"
+
 [instances."gitlab.com".repositories]
 "CentOS/infra/tracker" = {}
+"fedora/legal/fedora-legal-docs" = {}
+"testing-farm/artemis" = {}
 
 # Forgejo configuration for codeberg.org
 [instances."codeberg.org"]
@@ -127,3 +143,6 @@ retrieve_closed_days_ago = 3
 [[instances."codeberg.org".query_repositories]]
 org = "fedora"
 label = "cle"
+
+[instances."codeberg.org".repositories]
+"AdamWill/rpmdepcheck" = {}
