@@ -43,7 +43,7 @@ retrieve_closed_days_ago = 3
 
 [[instances."pagure.io".query_repositories]]
 namespace = "fedora-infra"
-label = "cpe"  # Label marking issues to be synchronized
+label = "cle"  # Label marking issues to be synchronized
 
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
@@ -80,7 +80,7 @@ enabled = true
 instance_url = "https://github.com"
 instance_api_url = "https://api.github.com"
 token = "$secrets.githubcom_token"
-label = "cpe"
+label = "cle"
 blocked_label = "blocked"
 usermap = "githubcom_jira_usermap.toml"
 # retrieve also closed tickets that were closed in last X days
@@ -97,7 +97,7 @@ org = "CentOS"
 "neoave/mrack" = {}
 "os-autoinst/openQA-python-client" = {}
 "temtee/tmt" = {}
-"Zlopez/jira_sync" = { label = "cpe" }
+"Zlopez/jira_sync" = { label = "cle" }
 
 # GitLab configuration
 [instances."gitlab.com"]
