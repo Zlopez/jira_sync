@@ -261,18 +261,34 @@ TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES
 
 
 def mock_jira__get_issues_by_labels(
-    labels: str | Collection[str], issues_url: Collection[str] = [], closed=False
+    labels: str | Collection[str] = [],
+    issues_url: Collection[str] = [],
+    closed=False,
+    filters: list[str] | None = None,
 ):
     if isinstance(labels, str):
         labels = [labels]
+    # Label filter
     issues = [
         issue
         for issue in TEST_JIRA_ISSUES
-        if any(label in issue.fields.labels for label in labels)
+        if not labels
+        or any(label in issue.fields.labels for label in labels)
         and (issue.fields.status.name == "DONE") == closed
     ]
+    # Issues filter
     if issues_url:
         issues = [issue for issue in issues if issue.fields.external_url in (issues_url)]
+    # Other filters
+    for filter in filters or []:
+        # BZ URL filter
+        if filter.startswith('"BZ URL" = '):
+            url = filter[12:-1]  # remove prefix and quotes
+            issues = [issue for issue in issues if issue.fields.external_url == url]
+        # summary filter
+        if filter.startswith("summary ~ "):
+            summary = filter[11:-1]  # remove prefix and quotes
+            issues = [issue for issue in issues if issue.summary == summary]
 
     return issues
 
