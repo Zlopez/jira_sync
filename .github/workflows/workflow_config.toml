@@ -122,7 +122,7 @@ org = "fedora/docs"
 label = "cle"
 
 [instances."gitlab.com".repositories]
-"CentOS/infra/tracker" = {}
+"CentOS/infra/tracker" = { blocked_label = "status::blocked" }
 "fedora/legal/fedora-legal-docs" = {}
 "testing-farm/artemis" = {}
 
