@@ -7,7 +7,8 @@ import tomlkit
 
 from jira_sync.config import main
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+from ..common import PROJECT_ROOT
+
 CONFIG_PATH = PROJECT_ROOT / "config.example.toml"
 EXPECTED_CONFIG = {
     "general": {
