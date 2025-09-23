@@ -71,7 +71,11 @@ class JIRA:
         return self._jira
 
     def get_issues_by_labels(
-        self, labels: str | Collection[str], issues_url: Collection[str] = [], closed: bool = False
+        self,
+        labels: str | Collection[str] = [],
+        issues_url: Collection[str] = [],
+        closed: bool = False,
+        filters: list[str] | None = None,
     ) -> list[Issue]:
         """
         Retrieve issues for the specified labels.
@@ -89,25 +93,28 @@ class JIRA:
             log.info("Skipping getting JIRA issues by labels: %s", ", ".join(labels))
             return []
 
-        urls_filter = ""
+        search_filters: list[str] = [f'project = "{self.jira_config.project}"']
+
+        if labels:
+            labels_str = ", ".join(f'"{label}"' for label in labels)
+            search_filters.append(f"labels IN ({labels_str})")
+
+        if closed:
+            search_filters.append('status IN ("Done", "Closed")')
+        else:
+            search_filters.append('status NOT IN ("Done", "Closed")')
 
         if issues_url:
             urls = ", ".join(f'"{url}"' for url in issues_url)
-            urls_filter = f' AND "External Issue URL" IN ({urls})'
+            search_filters.append(f'"External Issue URL" IN ({urls})')
 
-        labels_str = ", ".join(f'"{label}"' for label in labels)
-
-        if closed:
-            status_blurb = 'status IN ("Done", "Closed")'
-        else:
-            status_blurb = 'status NOT IN ("Done", "Closed")'
+        if filters:
+            search_filters.extend(filters)
 
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(
-                f'project = "{self.jira_config.project}" AND labels IN ({labels_str})'
-                + f" AND {status_blurb}"
-                + urls_filter,
+                " AND ".join(search_filters),
                 maxResults=0,
                 use_post=True,
             ),
