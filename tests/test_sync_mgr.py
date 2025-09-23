@@ -1,23 +1,14 @@
-from functools import partial
-from pathlib import Path
 from unittest import mock
 
 import pytest
 
-from jira_sync.config import Config
 from jira_sync.jira_wrapper import JiraRunMode
 from jira_sync.repositories import Instance, Repository
 from jira_sync.repositories import Issue as ForgeIssue
 from jira_sync.repositories import IssueStatus as ForgeIssueStatus
 from jira_sync.sync_mgr import SyncManager
 
-from .common import (
-    JiraIssue,
-    gen_test_config,
-    mock_jira__create_issue,
-    mock_jira__get_issues_by_labels,
-    mock_requests_get,
-)
+from .common import JiraIssue, mock_requests_get
 
 
 def mock_with_name(*args, cls: type = mock.Mock, name: str, **kwargs):
@@ -76,23 +67,10 @@ def mock_instance():
 
 
 @pytest.fixture
-def mock_jira():
-    jira = mock.Mock()
-    jira.create_issue.side_effect = mock.Mock(wraps=partial(mock_jira__create_issue, {}))
-    jira.get_issues_by_labels.side_effect = mock.Mock(wraps=mock_jira__get_issues_by_labels)
-
+def mock_jira(test_jira_obj):
     with mock.patch("jira_sync.sync_mgr.JIRA") as JIRA:
-        JIRA.return_value = jira
-        yield jira
-
-
-@pytest.fixture
-def test_config(request: pytest.FixtureRequest) -> Config:
-    params = {"instances_enabled": True, "repositories_enabled": True}
-    if hasattr(request, "param"):
-        params |= request.param
-
-    return Config.model_validate(gen_test_config(**params) | {"config_path": Path("/dev/null")})
+        JIRA.return_value = test_jira_obj
+        yield test_jira_obj
 
 
 @pytest.fixture
