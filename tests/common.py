@@ -1,9 +1,12 @@
 from collections.abc import Collection
+from pathlib import Path
 from unittest import mock
 from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 import requests
 from pydantic import BaseModel
+
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class HashableModel(BaseModel):
