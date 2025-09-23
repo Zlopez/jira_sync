@@ -1,0 +1,58 @@
+amqp_url = "amqp://fedoramessages:fedoramessages@tinystage.tinystage.test"
+callback = "jira_sync.consumer:Consumer"
+
+[tls]
+ca_cert = "/etc/fedora-messaging/cacert.pem"
+keyfile = "/etc/fedora-messaging/fedora-key.pem"
+certfile = "/etc/fedora-messaging/fedora-cert.pem"
+
+[client_properties]
+app = "Jira Sync"
+
+[[bindings]]
+exchange = "amq.topic"
+routing_keys = ["org.fedoraproject.prod.bugzilla.bug.update"]
+
+[consumer_config]
+config_file = "config.toml"
+run_mode = "READ_ONLY"
+
+# [monitoring]
+# Set this if you want to enable HTTP-based monitoring of the service
+# port = 8070
+
+[log_config]
+version = 1
+disable_existing_loggers = true
+
+[log_config.formatters.simple]
+format = "[%(levelname)s %(name)s] %(message)s"
+
+[log_config.handlers.console]
+class = "logging.StreamHandler"
+formatter = "simple"
+stream = "ext://sys.stdout"
+
+[log_config.loggers.jira_sync]
+level = "INFO"
+propagate = false
+handlers = ["console"]
+
+[log_config.loggers.fedora_messaging]
+level = "INFO"
+propagate = false
+handlers = ["console"]
+
+[log_config.loggers.twisted]
+level = "INFO"
+propagate = false
+handlers = ["console"]
+
+[log_config.loggers.pika]
+level = "WARNING"
+propagate = false
+handlers = ["console"]
+
+[log_config.root]
+level = "ERROR"
+handlers = ["console"]

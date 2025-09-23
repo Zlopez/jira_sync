@@ -1,3 +1,7 @@
+# Test fixture library
+# https://docs.pytest.org/en/7.1.x/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
+
+
 from functools import partial
 from pathlib import Path
 from unittest import mock
