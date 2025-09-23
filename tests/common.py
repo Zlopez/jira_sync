@@ -260,7 +260,38 @@ TEST_GITHUB_JIRA_ISSUES = [
     )
 ]
 
-TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES
+
+# Bugzilla
+TEST_BZ_JIRA_ISSUES = [
+    JiraIssue.model_validate(
+        {
+            "key": f"CPE-{id_}",
+            "summary": "BOO",
+            "fields": {
+                "description": "BOO BOO",
+                "status": {"name": "UNSET"},
+                "labels": ["bugzilla"],
+            },
+        }
+        | spec
+    )
+    for id_, spec in enumerate(
+        (
+            {
+                "fields": {
+                    "external_url": "https://bugzilla.redhat.com/show_bug.cgi?id=2396374",
+                },
+            },
+            # Just created, Watson didn't do its sync yet
+            {
+                "summary": "https://bugzilla.redhat.com/show_bug.cgi?id=2396375",
+            },
+        ),
+        start=201,
+    )
+]
+
+TEST_JIRA_ISSUES = TEST_PAGURE_JIRA_ISSUES + TEST_GITHUB_JIRA_ISSUES + TEST_BZ_JIRA_ISSUES
 
 
 def mock_jira__get_issues_by_labels(

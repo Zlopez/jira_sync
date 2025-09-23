@@ -12,6 +12,8 @@ jira = "^3.5.2"
 click = "^8.1.7"
 requests = "^2.31.0"
 pydantic = "^2.8.2"
+fedora-messaging = "^3.8.0"
+bugzilla2fedmsg-schema = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 poetry = "^2.0.0"
@@ -42,6 +44,11 @@ allowed-confusables = ["’"]
 
 [tool.mypy]
 show_error_context = true
+
+[[tool.mypy.overrides]]
+module = ["bugzilla2fedmsg_schema.*"]
+follow_untyped_imports = true
+
 
 [build-system]
 requires = ["poetry-core"]

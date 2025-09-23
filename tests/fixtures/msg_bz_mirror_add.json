@@ -1,0 +1,127 @@
+{
+  "body" : {
+    "agent_name" : "fedora-admin-xmlrpc",
+    "bug" : {
+      "alias" : [],
+      "assigned_to" : "amoloney@redhat.com",
+      "cc" : [],
+      "cf_atomic" : "",
+      "cf_category" : "",
+      "cf_clone_of" : "",
+      "cf_cloudforms_team" : "",
+      "cf_crm" : "",
+      "cf_doc_type" : "",
+      "cf_documentation_action" : "",
+      "cf_embargoed" : "",
+      "cf_environment" : "",
+      "cf_fixed_in" : "",
+      "cf_last_closed" : null,
+      "cf_mount_type" : "",
+      "cf_ovirt_team" : "",
+      "cf_regression_status" : "",
+      "cf_release_notes" : "",
+      "cf_story_points" : "",
+      "cf_target_upstream_version" : "",
+      "cf_type" : "",
+      "classification" : "Fedora",
+      "component" : "distribution",
+      "creation_time" : 1758203378,
+      "creator" : "blc@redhat.com",
+      "flags" : [
+        {
+          "id" : 6206636,
+          "name" : "mirror",
+          "value" : "+"
+        }
+      ],
+      "id" : 2396373,
+      "is_private" : false,
+      "keywords" : [],
+      "last_change_time" : 1758203378,
+      "op_sys" : "Linux",
+      "operating_system" : "Linux",
+      "platform" : "Unspecified",
+      "priority" : "unspecified",
+      "product" : "Fedora",
+      "qa_contact" : {
+        "id" : 171387,
+        "login" : "extras-qa@fedoraproject.org",
+        "real_name" : "Fedora Extras Quality Assurance"
+      },
+      "reporter" : {
+        "id" : 154810,
+        "login" : "blc@redhat.com",
+        "real_name" : "Brendan Conoboy"
+      },
+      "resolution" : "",
+      "severity" : "low",
+      "status" : {
+        "id" : 1,
+        "name" : "NEW"
+      },
+      "summary" : "Test bug 2 for mirroring use",
+      "target_milestone" : null,
+      "url" : "",
+      "version" : {
+        "id" : 495,
+        "name" : "rawhide"
+      },
+      "weburl" : "https://bugzilla.redhat.com/show_bug.cgi?id=2396373",
+      "whiteboard" : ""
+    },
+    "event" : {
+      "action" : "modify",
+      "bug_id" : 2396373,
+      "change_set" : "45638.1758203385.13211",
+      "changes" : [
+        {
+          "added" : "+",
+          "field" : "flag.mirror",
+          "field_name" : "flag.mirror",
+          "removed" : ""
+        }
+      ],
+      "routing_key" : "bug.modify",
+      "rule_id" : 1622,
+      "target" : "bug",
+      "time" : 1758203385,
+      "user" : {
+        "id" : 449139,
+        "login" : "fedora-admin-xmlrpc@fedoraproject.org",
+        "real_name" : "Fedora Admin user for bugzilla script actions"
+      },
+      "who" : "fedora-admin-xmlrpc@fedoraproject.org"
+    },
+    "headers" : {
+      "JMSXUserID" : "bugzilla-bot",
+      "ack" : "ID:umb-prod-1.umb-001.prod.us-east-1.aws.redhat.com-44083-1757619070915-203890:14",
+      "amq6100_destination" : "queue://Consumer.fedorainfra.DO-NOT-COPY.VirtualTopic.eng.bugzilla.>",
+      "amq6100_originalDestination" : "topic://VirtualTopic.eng.bugzilla.bug.modify",
+      "content-length" : "1572",
+      "correlation-id" : "227b7484-5d63-488b-89cc-a4bf9120fa8c",
+      "destination" : "/topic/VirtualTopic.eng.bugzilla.bug.modify",
+      "esbMessageType" : "bugzillaNotification",
+      "esbSourceSystem" : "bugzilla",
+      "expires" : "1758289787869",
+      "message-id" : "ID:umb-prod-1.umb-001.prod.us-east-1.aws.redhat.com-44083-1757619070915-7:201362:-1:1:14",
+      "original-destination" : "/topic/VirtualTopic.eng.bugzilla.bug.modify",
+      "priority" : "4",
+      "subscription" : "0",
+      "timestamp" : "1758203387869"
+    },
+    "usernames" : [
+      "fedora-admin-xmlrpc"
+    ]
+  },
+  "headers" : {
+    "fedora_messaging_schema" : "bugzilla2fedmsg.messageV1bz4",
+    "fedora_messaging_severity" : 20,
+    "fedora_messaging_user_fedora-admin-xmlrpc" : true,
+    "priority" : 0,
+    "sent-at" : "2025-09-18T14:06:14+00:00"
+  },
+  "id" : "beb99bea-eb2f-4e6f-aa5c-36b9606234cf",
+  "priority" : 0,
+  "queue" : null,
+  "topic" : "org.fedoraproject.prod.bugzilla.bug.update"
+}
