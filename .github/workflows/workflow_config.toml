@@ -124,7 +124,6 @@ label = "cle"
 [instances."gitlab.com".repositories]
 "CentOS/infra/tracker" = { blocked_label = "status::blocked" }
 "fedora/legal/fedora-legal-docs" = {}
-"testing-farm/artemis" = {}
 
 # Forgejo configuration for codeberg.org
 [instances."codeberg.org"]
