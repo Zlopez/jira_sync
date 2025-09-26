@@ -1,0 +1,111 @@
+{
+  "body": {
+    "agent_name": null,
+    "bug": {
+      "alias": [],
+      "assigned_to": "moceap@hotmail.com",
+      "cc": [],
+      "cf_atomic": "",
+      "cf_category": "",
+      "cf_clone_of": "",
+      "cf_cloudforms_team": "",
+      "cf_crm": "",
+      "cf_doc_type": "",
+      "cf_documentation_action": "",
+      "cf_embargoed": "",
+      "cf_environment": "",
+      "cf_fixed_in": "",
+      "cf_last_closed": null,
+      "cf_mount_type": "",
+      "cf_ovirt_team": "",
+      "cf_regression_status": "",
+      "cf_release_notes": "",
+      "cf_story_points": "",
+      "cf_target_upstream_version": "",
+      "cf_type": "",
+      "classification": "Fedora",
+      "component": "gnulib",
+      "creation_time": 1758112291.0,
+      "creator": "twaugh@redhat.com",
+      "flags": [],
+      "id": 2396058,
+      "is_private": false,
+      "keywords": [],
+      "last_change_time": 1758112291.0,
+      "op_sys": "Linux",
+      "operating_system": "Linux",
+      "platform": "Unspecified",
+      "priority": "unspecified",
+      "product": "Fedora",
+      "qa_contact": {
+        "id": 171387,
+        "login": "extras-qa@fedoraproject.org",
+        "real_name": "Fedora Extras Quality Assurance"
+      },
+      "reporter": {
+        "id": 9956,
+        "login": "twaugh@redhat.com",
+        "real_name": "Tim Waugh"
+      },
+      "resolution": "",
+      "severity": "medium",
+      "status": {
+        "id": 1,
+        "name": "NEW"
+      },
+      "summary": "gnulib-tool broken, missing implementation file",
+      "target_milestone": null,
+      "url": "",
+      "version": {
+        "id": 7698,
+        "name": "42"
+      },
+      "weburl": "https://bugzilla.redhat.com/show_bug.cgi?id=2396058",
+      "whiteboard": ""
+    },
+    "event": {
+      "action": "create",
+      "bug_id": 2396058,
+      "change_set": "20446.1758112291.75432",
+      "changes": [],
+      "routing_key": "bug.create",
+      "target": "bug",
+      "time": 1758112291.0,
+      "user": {
+        "id": 9956,
+        "login": "twaugh@redhat.com",
+        "real_name": "Tim Waugh"
+      },
+      "who": "twaugh@redhat.com"
+    },
+    "headers": {
+      "JMSXUserID": "bugzilla-bot",
+      "ack": "ID:umb-prod-6.umb-001.prod.us-east-1.aws.redhat.com-45529-1757753103137-42216:7757",
+      "amq6100_destination": "queue://Consumer.fedorainfra.DO-NOT-COPY.VirtualTopic.eng.bugzilla.>",
+      "amq6100_originalDestination": "topic://VirtualTopic.eng.bugzilla.bug.create",
+      "content-length": "1404",
+      "correlation-id": "8c01aaac-6829-406c-bdd2-0daa029c14dd",
+      "destination": "/topic/VirtualTopic.eng.bugzilla.bug.create",
+      "esbMessageType": "bugzillaNotification",
+      "esbSourceSystem": "bugzilla",
+      "expires": "1758198708467",
+      "message-id": "ID:umb-prod-3.umb-001.prod.us-east-1.aws.redhat.com-39683-1757780983181-12:60362:-1:1:56",
+      "original-destination": "/topic/VirtualTopic.eng.bugzilla.bug.create",
+      "priority": "4",
+      "subscription": "0",
+      "timestamp": "1758112308467"
+    },
+    "usernames": []
+  },
+  "headers": {
+    "fedora_messaging_rpm_gnulib": true,
+    "fedora_messaging_schema": "bugzilla2fedmsg.messageV1bz4",
+    "fedora_messaging_severity": 20,
+    "priority": 0,
+    "sent-at": "2025-09-17T12:31:50+00:00"
+  },
+  "id": "938e759d-8952-4e19-abad-ab1f39011005",
+  "priority": 0,
+  "queue": null,
+  "topic": "org.fedoraproject.prod.bugzilla.bug.new"
+}

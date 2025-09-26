@@ -136,6 +136,18 @@ class TestJIRA:
         else:
             assert 'status NOT IN ("Done", "Closed")' in snippets
 
+    def test_get_issues_by_labels_filters(self, jira_config, mocked_jira_pkg):
+        jira_obj = jira_wrapper.JIRA(jira_config, run_mode=JiraRunMode.READ_ONLY)
+        jira_obj.get_issues_by_labels(
+            filters=["test-filter-1 = test-value-1", "test-filter-2 = test-value-2"]
+        )
+        jira_obj.jira.search_issues.assert_called_once_with(
+            'project = "Project" AND status NOT IN ("Done", "Closed") AND '
+            "test-filter-1 = test-value-1 AND test-filter-2 = test-value-2",
+            maxResults=0,
+            use_post=True,
+        )
+
     @pytest.mark.parametrize(
         "test_case", ("success-labels-as-str", "success-labels-as-collection", "failure")
     )
