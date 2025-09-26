@@ -144,5 +144,5 @@ org = "fedora"
 label = "cle"
 
 [instances."codeberg.org".repositories]
-"AdamWill/rpmdepcheck" = {}
+"AdamWill/rmdepcheck" = {}
 "fedora/forgejo-deployment" = {}
