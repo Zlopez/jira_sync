@@ -48,17 +48,16 @@ label = "cle"  # Label marking issues to be synchronized
 [instances."pagure.io".repositories]
 # List of repositories to check for tickets
 # When label is set, only tickets with this label will be covered
+"fedora_nightlies" = {}
 "Fedora-Council/council-docs" = {}
 "Fedora-Council/tickets" = {}
 "fedora-docs" = {}
 "fedora-docs/quick-docs" = {}
-"fedora-infrastructure" = {}
-"releng" = {}
-"fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
-"fedora-infra/infrastructure-projects" = {}
-"fedora-infra/arc" = {}
 "fedora-easy-karma" = {}
-"fedora_nightlies" = {}
+"fedora-infrastructure" = {}
+"fedora-infra/ansible" = {enabled = false}  # The Ansible repo doesn’t have issues
+"fedora-infra/arc" = {}
+"fedora-infra/infrastructure-projects" = {}
 "fedora-pdr" = {}
 "fedora-qa" = {}
 "fedora-qa/blockerbugs" = {}
@@ -72,6 +71,7 @@ label = "cle"  # Label marking issues to be synchronized
 "fedora-qa/relval" = {}
 "fedora-qa/relvalconsumer" = {}
 "fedora-qa/testdays-web" = {}
+"releng" = {}
 
 # GitHub configuration
 [instances."github.com"]
