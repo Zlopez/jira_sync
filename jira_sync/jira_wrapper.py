@@ -106,7 +106,9 @@ class JIRA:
 
         if issues_url:
             urls = ", ".join(f'"{url}"' for url in issues_url)
-            search_filters.append(f'"External Issue URL" IN ({urls})')
+            # Searching summary will prevent creating the issue again in case
+            # sync from upstream is down
+            search_filters.append(f'("External Issue URL" IN ({urls}) OR "Summary" IN ({urls}))')
 
         if filters:
             search_filters.extend(filters)
