@@ -133,8 +133,7 @@ class TestJIRA:
         if closed:
             assert 'status IN ("Done", "Closed")' in snippets
             assert (
-                f'("External Issue URL" IN ("{ISSUE_URL}") OR "Summary" IN ("{ISSUE_URL}"))'
-                in snippets
+                f'("External Issue URL" IN ("{ISSUE_URL}") OR Summary ~ "{ISSUE_URL}")' in snippets
             )
         else:
             assert 'status NOT IN ("Done", "Closed")' in snippets
