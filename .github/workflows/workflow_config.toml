@@ -115,7 +115,7 @@ retrieve_closed_days_ago = 3
 
 [[instances."gitlab.com".query_repositories]]
 org = "fedora/design"
-label = "cle"
+label = "CLE"
 
 [[instances."gitlab.com".query_repositories]]
 org = "fedora/docs"
