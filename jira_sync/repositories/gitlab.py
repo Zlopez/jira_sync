@@ -167,18 +167,17 @@ class GitLabInstance(GitLabBase, Instance):
             match query_params:
                 case {"org": org}:
                     encoded_url = urllib.parse.quote_plus(org)
-                    endpoint = f"/groups/{encoded_url}/projects"
+                    endpoint = f"/groups/{encoded_url}/projects?include_subgroups=true"
                 case {"user": user}:  # pragma: no branch
                     endpoint = f"/users/{user}/repos"
 
             response = None
-
             while next_page := self.get_next_page(endpoint=endpoint, response=response):
                 response = requests.get(**next_page)
                 if response.status_code == requests.codes.ok:
                     api_result = response.json()
                     repos |= {
-                        repo["full_name"]: repo_params
+                        repo["path_with_namespace"]: repo_params
                         for repo in api_result
                         if repo["issues_enabled"] and not repo["archived"]
                     }
