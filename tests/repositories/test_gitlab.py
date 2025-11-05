@@ -122,7 +122,7 @@ class TestGitLabInstance(GitLabTestBase, BaseTestInstance):
                 json=mock.Mock(
                     return_value=[
                         {
-                            "full_name": f"/{key.upper()}/{repo}",
+                            "path_with_namespace": f"/{key.upper()}/{repo}",
                             "issues_enabled": issues_enabled,
                             "archived": archived,
                             "disabled": False,
@@ -138,7 +138,7 @@ class TestGitLabInstance(GitLabTestBase, BaseTestInstance):
         ]
 
         if key == "org":
-            endpoint = f"/groups/{key.upper()}/projects"
+            endpoint = f"/groups/{key.upper()}/projects?include_subgroups=true"
         else:
             endpoint = f"/{key}s/{key.upper()}/repos"
 
