@@ -26,6 +26,7 @@ def run_mode(request):
 TEST_JIRA_CONFIG = {
     "instance_url": "https://jira.example.com",
     "project": "Project",
+    "username": "username",
     "token": "TOKEN",
     "default_issue_type": "Story",
     "label": "label",
@@ -78,7 +79,7 @@ class TestJIRA:
             assert jira_obj._jira is None
         else:
             mocked_jira_pkg.client.JIRA.assert_called_with(
-                str(jira_config.instance_url), token_auth=jira_config.token
+                str(jira_config.instance_url), basic_auth=(jira_config.username, jira_config.token)
             )
             assert jira_obj._jira == mocked_jira_pkg.client.JIRA.return_value
             jira_obj._jira.session.assert_called_once()

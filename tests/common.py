@@ -482,6 +482,7 @@ def gen_test_config(*, instances_enabled, repositories_enabled):
             "jira": {
                 "instance_url": "https://jira.atlassian.com",
                 "project": "Project",
+                "username": "username",
                 "token": "token",
                 "default_issue_type": "Story",
                 "label": "label",

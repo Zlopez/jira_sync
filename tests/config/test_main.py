@@ -15,6 +15,7 @@ EXPECTED_CONFIG = {
         "jira": {
             "default_issue_type": "Story",
             "instance_url": "https://jira.atlassian.com/",
+            "username": "username",
             "label": "label",
             "project": "Project",
             "story_points_field": "",

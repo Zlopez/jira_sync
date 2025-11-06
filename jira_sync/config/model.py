@@ -23,6 +23,7 @@ class BlockValuesConfig(BaseModel):
 class JiraConfig(BaseModel):
     instance_url: HttpUrl
     project: str
+    username: str
     token: str
     default_issue_type: str
     label: str
