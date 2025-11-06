@@ -5,6 +5,7 @@
 [general.jira]
 instance_url = "https://jira.atlassian.com"  # JIRA instance URL
 project = "Project"  # Name of the project to sync tickets to
+username = "username" # JIRA user that the token is generated for
 token = "token"  # API token to use for authentication
 default_issue_type = "Story"  # Issue type to use when creating new issue in JIRA
 label = "label"  # Label used for all issues created by this script

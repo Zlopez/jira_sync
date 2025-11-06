@@ -57,7 +57,7 @@ class JIRA:
             self._jira = None
         else:
             self._jira = jira.client.JIRA(
-                str(jira_config.instance_url), token_auth=jira_config.token
+                str(jira_config.instance_url), basic_auth=(jira_config.username, jira_config.token)
             )
             # Establish that the connection is authenticated, will throw an exception without.
             self._jira.session()
