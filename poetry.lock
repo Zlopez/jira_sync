@@ -697,13 +697,13 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "fedora-messaging"
-version = "3.8.0"
+version = "3.9.0"
 description = "A set of tools for using Fedora's messaging infrastructure"
 optional = false
 python-versions = "<4.0.0,>=3.9.0"
 files = [
-    {file = "fedora_messaging-3.8.0-py3-none-any.whl", hash = "sha256:ba178db2f6070350bfe4ca4d3a4e3e910d25985b3f268acb331783c9d1ca13e7"},
-    {file = "fedora_messaging-3.8.0.tar.gz", hash = "sha256:31413f1e28b0a5b1f79c42cf04e57232d75b9193a24b4ac4d6c0acb8bcb45c4e"},
+    {file = "fedora_messaging-3.9.0-py3-none-any.whl", hash = "sha256:377f6562879da0d80265fcbd93bb0febc85bcee3c9b9e7f4d272b3322798f87d"},
+    {file = "fedora_messaging-3.9.0.tar.gz", hash = "sha256:7eb861ff4404a8dcba4f11590874a66124cb4db32b7ff65356af6ffb0e3b0647"},
 ]
 
 [package.dependencies]
