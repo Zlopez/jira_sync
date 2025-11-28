@@ -159,9 +159,10 @@ labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 1
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
 
-[[instances."forge.fedoraproject.org".query_repositories]]
-org = "cle"
-label = "cle"
+# Commenting this out because of https://forge.fedoraproject.org/forge/forge/issues/304
+#[[instances."forge.fedoraproject.org".query_repositories]]
+#org = "cle"
+#label = "cle"
 
 [instances."forge.fedoraproject.org".repositories]
 "forge/forge" = {}
