@@ -114,6 +114,8 @@ class JIRA:
         if filters:
             search_filters.extend(filters)
 
+        log.debug("Search filter: '%s'", search_filters)
+
         issues = cast(
             jira.client.ResultList[Issue],
             self.jira.search_issues(

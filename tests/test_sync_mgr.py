@@ -199,13 +199,17 @@ class TestSyncManager:
             for issue in filtered_jira_issues
         )
 
-    @pytest.mark.parametrize("test_case", ("single-line", None))
+    @pytest.mark.parametrize("test_case", ("single-line", "summary", None))
     def test_get_full_url_from_jira_issue(self, test_case, sync_mgr):
-        if not test_case:
-            expected_url = None
-        else:
+        if test_case == "single-line":
             expected_url = "URL"
-        issue = mock.Mock(fields=mock.Mock(external_url=expected_url))
+            issue = mock.Mock(fields=mock.Mock(external_url=expected_url))
+        elif test_case == "summary":
+            expected_url = "summary"
+            issue = mock.Mock(fields=mock.Mock(external_url=None, summary=expected_url))
+        else:
+            expected_url = None
+            issue = mock.Mock(fields=mock.Mock(external_url=expected_url, summary=expected_url))
 
         url = sync_mgr.get_full_url_from_jira_issue(issue)
 
@@ -249,10 +253,27 @@ class TestSyncManager:
             any_order=True,
         )
 
-    @pytest.mark.parametrize("test_case", ("normal", "creation-fails", "no-forge-issues"))
+    @pytest.mark.parametrize(
+        "test_case", ("normal", "creation-fails", "no-forge-issues", "30-plus-forge-issues")
+    )
     def test_create_or_reopen_jira_issues(self, test_case, sync_mgr, caplog):
         if "no-forge-issues" in test_case:
             forge_issues = []
+        elif "30-plus-forge-issue" in test_case:
+            instance = mock.Mock()
+            instance.name = "instance.io"
+            repository = mock.Mock(instance=instance)
+            repository.name = "repository"
+            forge_issues = [
+                mock.Mock(
+                    full_url=f"URL{idx}",
+                    title=f"Title {idx}",
+                    content="Some content",
+                    repository=repository,
+                    story_points=10,
+                )
+                for idx in range(35)
+            ]
         else:
             instance = mock.Mock()
             instance.name = "instance.io"
@@ -299,6 +320,9 @@ class TestSyncManager:
         if "creation-fails" in test_case:
             assert len(forge_issues) - 1 == len(matched_issues)
             assert "Couldn’t create new JIRA issue from 'URL1'" in caplog.text
+        elif "30-plus-forge-issues" in test_case:
+            assert len(forge_issues) == len(matched_issues)
+            assert "Creating JIRA ticket from URL34" in caplog.text
         else:
             assert len(forge_issues) == len(matched_issues)
             assert "Couldn’t create new JIRA issue from" not in caplog.text
@@ -309,20 +333,26 @@ class TestSyncManager:
             assert forge_issue is forge_issues[1]
 
         assert "Creating/reopening JIRA issues for unmatched forge issues" in caplog.text
-        sync_mgr._jira.get_issues_by_labels.assert_called_once_with(
-            sync_mgr._jira_config.label, ["URL0", "URL1"], closed=True
-        )
+        if "30-plus-forge-issues" in test_case:
+            sync_mgr._jira.get_issues_by_labels.assert_called_once_with(
+                sync_mgr.jira_repo_labels, [], closed=True
+            )
+        else:
+            sync_mgr._jira.get_issues_by_labels.assert_called_once_with(
+                sync_mgr._jira_config.label, ["URL0", "URL1"], closed=True
+            )
+            mock_jira_create_issue.assert_called_once_with(
+                url="URL1",
+                labels=[
+                    sync_mgr._jira_config.label,
+                    "instance.io:repository",
+                    "instance.io",
+                    "repository",
+                ],
+            )
+
         mock_match_jira_forge_issues.assert_called_once_with(
             sync_mgr._jira.get_issues_by_labels.return_value, forge_issues
-        )
-        mock_jira_create_issue.assert_called_once_with(
-            url="URL1",
-            labels=[
-                sync_mgr._jira_config.label,
-                "instance.io:repository",
-                "instance.io",
-                "repository",
-            ],
         )
 
     @pytest.mark.parametrize("testcase", ("usermap-key", "usermap-email"))

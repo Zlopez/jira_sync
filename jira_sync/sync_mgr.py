@@ -147,6 +147,8 @@ class SyncManager:
         :return: The URL, or None if the JIRA description is empty
         """
         full_url = getattr(jira_issue.fields, self._jira_config.external_url_field, None)
+        if not full_url:
+            full_url = getattr(jira_issue.fields, "summary", None)
         return full_url
 
     def match_jira_forge_issues(
@@ -167,6 +169,7 @@ class SyncManager:
 
         for jira_issue in jira_issues:
             full_url = self.get_full_url_from_jira_issue(jira_issue)
+            log.debug("Full url to match: '%s'", full_url)
             match = None
             for forge_issue in unmatched_forge_issues:
                 if forge_issue.full_url == full_url:
@@ -218,9 +221,18 @@ class SyncManager:
 
         forge_issues_urls = [issue.full_url for issue in forge_issues]
         log.info("Retrieving list of closed JIRA issues…")
-        closed_jira_issues = self._jira.get_issues_by_labels(
-            self._jira_config.label, forge_issues_urls, closed=True
-        )
+        # If the search string is too long it could fail
+        # It seems that 30 urls are still working
+        # In other cases just retrieve all closed issues by label
+        if len(forge_issues_urls) < 30:
+            closed_jira_issues = self._jira.get_issues_by_labels(
+                self._jira_config.label, forge_issues_urls, closed=True
+            )
+        else:
+            closed_jira_issues = self._jira.get_issues_by_labels(
+                self.jira_repo_labels, [], closed=True
+            )
+
         log.info("Retrieved %d closed JIRA issues", len(closed_jira_issues))
 
         log.info("Matching closed JIRA issues with unmatched forge issues…")
