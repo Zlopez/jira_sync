@@ -149,7 +149,7 @@ label = "cle"
 # Forgejo configuration for codeberg.org
 [instances."forge.fedoraproject.org"]
 type = "forgejo"
-enabled = false
+enabled = true
 instance_url = "https://forge.fedoraproject.org"
 token = "$secrets.forgefedoraprojectorg_token"
 blocked_label = "blocked"
