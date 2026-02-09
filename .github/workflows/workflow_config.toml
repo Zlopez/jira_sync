@@ -127,25 +127,3 @@ org = "fedora"
 label = "cle"
 
 [instances."codeberg.org".repositories]
-"AdamWill/rmdepcheck" = {}
-
-# Forgejo configuration for codeberg.org
-[instances."forge.fedoraproject.org"]
-type = "forgejo"
-enabled = false
-instance_url = "https://forge.fedoraproject.org"
-token = "$secrets.forgefedoraprojectorg_token"
-blocked_label = "blocked"
-usermap = "pagureio_jira_usermap.toml"
-labels_to_story_points = { low-trouble = 1, medium-trouble = 5, high-trouble = 10 }
-# retrieve also closed tickets that were closed in last X days
-# if set to 0, only retrieves open tickets
-retrieve_closed_days_ago = 3
-
-# Commenting this out because of https://forge.fedoraproject.org/forge/forge/issues/304
-#[[instances."forge.fedoraproject.org".query_repositories]]
-#org = "cle"
-#label = "cle"
-
-[instances."forge.fedoraproject.org".repositories]
-"forge/forge" = {}
