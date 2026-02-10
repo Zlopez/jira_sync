@@ -36,21 +36,7 @@ instance_url = "https://pagure.io/"  # URL for pagure endpoint
 blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
 # converts specific label to story point
-labels_to_story_points = {
-    points::1 = 1,
-    points::2 = 2,
-    points::3 = 3,
-    points::4 = 4,
-    points::5 = 5,
-    points::6 = 6,
-    points::7 = 7,
-    points::8 = 8,
-    points::9 = 9,
-    points::10 = 10,
-    points::11 = 11,
-    poinst::12 = 12,
-    points::13 = 13
-}
+labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::4" = 4, "points::5" = 5, "points::6" = 6, "points::7" = 7, "points::8" = 8, "points::9" = 9, "points::10" = 10, "points::11" = 11, "poinst::12" = 12, "points::13" = 13 }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -80,6 +66,8 @@ token = "$secrets.githubcom_token"
 label = "cle"
 blocked_label = "blocked"
 usermap = "githubcom_jira_usermap.toml"
+# converts specific label to story point
+labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::4" = 4, "points::5" = 5, "points::6" = 6, "points::7" = 7, "points::8" = 8, "points::9" = 9, "points::10" = 10, "points::11" = 11, "poinst::12" = 12, "points::13" = 13 }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -105,21 +93,8 @@ instance_api_url = "https://gitlab.com/api/v4"
 token = "$secrets.gitlabcom_token"
 blocked_label = "blocked"
 usermap = "gitlabcom_jira_usermap.toml"
-labels_to_story_points = {
-    points::1 = 1,
-    points::2 = 2,
-    points::3 = 3,
-    points::4 = 4,
-    points::5 = 5,
-    points::6 = 6,
-    points::7 = 7,
-    points::8 = 8,
-    points::9 = 9,
-    points::10 = 10,
-    points::11 = 11,
-    poinst::12 = 12,
-    points::13 = 13
-}
+# converts specific label to story point
+labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::4" = 4, "points::5" = 5, "points::6" = 6, "points::7" = 7, "points::8" = 8, "points::9" = 9, "points::10" = 10, "points::11" = 11, "poinst::12" = 12, "points::13" = 13 }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -145,21 +120,8 @@ instance_url = "https://codeberg.org"
 token = "$secrets.codebergorg_token"
 blocked_label = "blocked"
 usermap = "codebergorg_jira_usermap.toml"
-labels_to_story_points = {
-    points::1 = 1,
-    points::2 = 2,
-    points::3 = 3,
-    points::4 = 4,
-    points::5 = 5,
-    points::6 = 6,
-    points::7 = 7,
-    points::8 = 8,
-    points::9 = 9,
-    points::10 = 10,
-    points::11 = 11,
-    poinst::12 = 12,
-    points::13 = 13
-}
+# converts specific label to story point
+labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::4" = 4, "points::5" = 5, "points::6" = 6, "points::7" = 7, "points::8" = 8, "points::9" = 9, "points::10" = 10, "points::11" = 11, "poinst::12" = 12, "points::13" = 13 }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
