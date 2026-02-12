@@ -256,6 +256,27 @@ class JIRA:
         log.debug("%s: Adding story points: %d", issue.key, story_points)
         return changes | {self.jira_config.story_points_field: [{"set": story_points}]}
 
+    def set_priority(self, issue: Issue, priority: str, changes: dict) -> dict:
+        """
+        Add story points to an issue.
+
+        :param issue: Issue object
+        :param priority: Priority to set
+        :param changes: Dictionary containing all the changes for the issue
+
+        :return: Updated dictionary of changes
+        """
+        if issue.fields.priority == priority:
+            log.debug("%s: priority already set to correct value. Skipping.", issue.key)
+            return changes
+
+        if priority == "":
+            log.debug("%s: no priority set in source issue. Skipping.", issue.key)
+            return changes
+
+        log.debug("%s: Setting priority: %s", issue.key, priority)
+        return changes | {"priority": [{"set": {"name": priority}}]}
+
     def add_blocked_status(self, issue: Issue, blocked: bool, changes: dict) -> dict:
         """
         Add blocked state to issue.

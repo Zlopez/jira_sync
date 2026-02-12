@@ -99,10 +99,13 @@ class ForgejoRepository(ForgejoBase, Repository):
             status = IssueStatus.closed
 
         story_points = 0
+        priority = ""
 
         for tag in _labels:
             if tag in self.labels_to_story_points.keys():
                 story_points = max(story_points, self.labels_to_story_points[tag])
+            if tag in self.labels_to_priority.keys():
+                priority = self.labels_to_priority[tag]
 
         return Issue(
             repository=self,
@@ -112,6 +115,7 @@ class ForgejoRepository(ForgejoBase, Repository):
             assignee=assignee,
             status=status,
             story_points=story_points,
+            priority=priority,
         )
 
     def get_issue_params(self, closed: bool) -> dict[str, Any]:

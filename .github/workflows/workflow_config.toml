@@ -37,6 +37,8 @@ blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "pagureio_jira_usermap.toml"  # Map pagure.io to JIRA users
 # converts specific label to story point
 labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::5" = 5, "points::8" = 8, "points::13" = 13 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -68,6 +70,8 @@ blocked_label = "blocked"
 usermap = "githubcom_jira_usermap.toml"
 # converts specific label to story point
 labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::5" = 5, "points::8" = 8, "points::13" = 13 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -95,6 +99,8 @@ blocked_label = "blocked"
 usermap = "gitlabcom_jira_usermap.toml"
 # converts specific label to story point
 labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::5" = 5, "points::8" = 8, "points::13" = 13 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3
@@ -122,6 +128,8 @@ blocked_label = "blocked"
 usermap = "codebergorg_jira_usermap.toml"
 # converts specific label to story point
 labels_to_story_points = { "points::1" = 1, "points::2" = 2, "points::3" = 3, "points::5" = 5, "points::8" = 8, "points::13" = 13 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 3

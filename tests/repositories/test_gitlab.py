@@ -182,12 +182,13 @@ class TestGitLabRepository(GitLabTestBase, BaseTestRepository):
     @classmethod
     def create_obj(cls, **kwargs):
         kwargs.setdefault("labels_to_story_points", {"label1": 5})
+        kwargs.setdefault("labels_to_priority", {"Priority::Medium": "Major"})
         return super().create_obj(**kwargs)
 
     @pytest.mark.parametrize("status", ("closed", "blocked", "new", "assigned"))
     @pytest.mark.parametrize("label_type", (dict, str), ids=("labels-as-dict", "labels-as-str"))
     def test_normalize_issue(self, status, label_type):
-        labels = ["one tag", "another tag", "label1"]
+        labels = ["one tag", "another tag", "label1", "Priority::Medium"]
         if status == "blocked":
             labels.append("blocked")
 
@@ -219,6 +220,7 @@ class TestGitLabRepository(GitLabTestBase, BaseTestRepository):
             assert issue.assignee is None
         assert issue.status == IssueStatus[status]
         assert issue.story_points == 5
+        assert issue.priority == "Major"
 
     @pytest.mark.parametrize("with_label", (True, False), ids=("with-label", "without-label"))
     @pytest.mark.parametrize("closed", (True, False), ids=("closed", "open"))

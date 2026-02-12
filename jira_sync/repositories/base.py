@@ -40,6 +40,7 @@ class Issue:
     assignee: str | None
     status: IssueStatus
     story_points: int
+    priority: str
 
 
 class APIBase:
@@ -218,6 +219,7 @@ class Instance(APIBase):
     usermap: dict[str, str]
     repositories: dict[str, "Repository"]
     labels_to_story_points: dict[str, int]
+    labels_to_priority: dict[str, str]
 
     _query_repositories: Collection[dict[str, Any]]
     _repositories: dict[str, Any]
@@ -242,6 +244,7 @@ class Instance(APIBase):
         query_repositories: Collection[dict[str, Any]],
         repositories: dict[str, dict[str, Any]],
         labels_to_story_points: dict[str, int],
+        labels_to_priority: dict[str, str],
         retrieve_closed_days_ago: int,
         **kwargs,
     ) -> None:
@@ -260,6 +263,7 @@ class Instance(APIBase):
         :param query_repositories: Configuration for querying repositories by namespace
         :param repositories: Mapping of repository names to configuration
         :param labels_to_story_poinsts: Mapping of labels to story points values
+        :param labels_to_priority: Mapping of labels to priority
         :param retrieve_closed_days_ago: How much ago we should look for closed tickets
         """
         self.name = name
@@ -280,6 +284,7 @@ class Instance(APIBase):
 
         self.usermap = usermap
         self.labels_to_story_points = labels_to_story_points or {}
+        self.labels_to_priority = labels_to_priority or {}
         self.retrieve_closed_days_ago = retrieve_closed_days_ago or 0
         self._query_repositories = query_repositories or ()
         self._repositories = repositories or {}
