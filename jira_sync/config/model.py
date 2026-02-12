@@ -65,6 +65,7 @@ class InstanceConfigBase(BaseModel):
     blocked_label: str
     usermap: InlineUsermap | Path
     labels_to_story_points: dict[str, int] = {}
+    labels_to_priority: dict[str, str] = {}
     retrieve_closed_days_ago: int = 0
     query_repositories: list = []
     repositories: dict[str, RepoConfig] = {}

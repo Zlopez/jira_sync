@@ -37,6 +37,8 @@ blocked_label = "blocked"  # Label that is marking blocked issues
 usermap = "fedora_jira_usermap.toml"  # External file, can be reused
 # converts specific label to story point
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0
@@ -64,6 +66,8 @@ instance_api_url = "https://api.github.com"
 blocked_label = "blocked" # Label that is marking blocked issues
 # converts specific label to story point
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0
@@ -90,6 +94,8 @@ blocked_label = "blocked" # Label that is marking blocked issues
 usermap = "gitlab_jira_usermap.toml"  # External file, can be reused
 # converts specific label to story point
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0
@@ -117,6 +123,8 @@ instance_url = "https://codeberg.org"
 blocked_label = "blocked"
 usermap = "codebergorg_jira_usermap.toml"
 labels_to_story_points = { little-work = 1, medium-work = 5, lots-of-work = 10 }
+# converts priority labels to priority in JIRA
+labels_to_priority = { "Priority::High" = "Critical", "Priority::Medium" = "Major", "Priority::Low" = "Minor" }
 # retrieve also closed tickets that were closed in last X days
 # if set to 0, only retrieves open tickets
 retrieve_closed_days_ago = 0

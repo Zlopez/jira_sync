@@ -342,6 +342,32 @@ class TestJIRA:
             assert f"KEY: Adding story points: {test_case}" in caplog.text
             assert output == {"story_points": [{"set": test_case}]}
 
+    @pytest.mark.parametrize("test_case", ("", "Major", "Minor"))
+    def test_set_priority(self, test_case, run_mode, jira_obj, caplog):
+        no_priority = test_case == ""
+        no_change = test_case == "Major"
+
+        issue = mock.Mock(key="KEY")
+        issue.fields.priority = "Major"
+        changes = {}
+
+        with caplog.at_level("DEBUG"):
+            output = jira_obj.set_priority(issue, test_case, changes)
+
+        if run_mode != JiraRunMode.READ_WRITE:
+            assert run_mode != JiraRunMode.DRY_RUN or jira_obj._jira is None
+            return
+
+        if no_priority:
+            assert "KEY: no priority set in source issue. Skipping." in caplog.text
+            assert output == {}
+        elif no_change:
+            assert "KEY: priority already set to correct value. Skipping." in caplog.text
+            assert output == {}
+        else:
+            assert f"KEY: Setting priority: {test_case}" in caplog.text
+            assert output == {"priority": [{"set": {"name": test_case}}]}
+
     def test_blocked_field_not_set(self, jira_obj, caplog):
         issue = mock.Mock(key="KEY")
         changes = {}

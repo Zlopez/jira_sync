@@ -364,6 +364,7 @@ class TestSyncManager:
                     "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
                     "story_points": 0,
+                    "priority": 0,
                 },
             },
             {"fields": {"assignee": {}, "status": {"name": "IN_PROGRESS"}}},
@@ -372,6 +373,7 @@ class TestSyncManager:
                     "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
                     "story_points": 0,
+                    "priority": 0,
                 },
             },
             {"fields": {"status": {"name": "SITUATION_IS_BORF"}}},
@@ -411,6 +413,7 @@ class TestSyncManager:
                         "assignee": None,
                         "status": ForgeIssueStatus.new,
                         "story_points": 10,
+                        "priority": 4,
                     }
                     | spec
                 )

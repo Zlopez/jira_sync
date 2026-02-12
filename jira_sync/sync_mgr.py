@@ -339,6 +339,7 @@ class SyncManager:
                 changes,
             )
             changes = self._jira.add_story_points(jira_issue, forge_issue.story_points, changes)
+            changes = self._jira.set_priority(jira_issue, forge_issue.priority, changes)
             changes = self._jira.add_blocked_status(
                 jira_issue, forge_issue.status == IssueStatus.blocked, changes
             )

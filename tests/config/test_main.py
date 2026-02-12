@@ -42,6 +42,11 @@ EXPECTED_CONFIG = {
             "instance_url": "https://pagure.io/",
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "labels_to_priority": {
+                "Priority::High": "Critical",
+                "Priority::Medium": "Major",
+                "Priority::Low": "Minor",
+            },
             "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
@@ -82,6 +87,11 @@ EXPECTED_CONFIG = {
             "instance_url": "https://github.com/",
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "labels_to_priority": {
+                "Priority::High": "Critical",
+                "Priority::Medium": "Major",
+                "Priority::Low": "Minor",
+            },
             "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
@@ -121,6 +131,11 @@ EXPECTED_CONFIG = {
             "instance_url": "https://gitlab.com/",
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "labels_to_priority": {
+                "Priority::High": "Critical",
+                "Priority::Medium": "Major",
+                "Priority::Low": "Minor",
+            },
             "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
@@ -160,6 +175,11 @@ EXPECTED_CONFIG = {
             "instance_api_url": None,
             "label": None,
             "labels_to_story_points": {"little-work": 1, "medium-work": 5, "lots-of-work": 10},
+            "labels_to_priority": {
+                "Priority::High": "Critical",
+                "Priority::Medium": "Major",
+                "Priority::Low": "Minor",
+            },
             "retrieve_closed_days_ago": 0,
             "query_repositories": [
                 {
