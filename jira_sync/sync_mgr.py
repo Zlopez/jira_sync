@@ -280,26 +280,26 @@ class SyncManager:
                 if forge_issue.assignee
                 else None
             )
+            log.debug("Comparing %s to %s", jira_issue.key, forge_issue.full_url)
             jira_assignee = jira_issue.fields.assignee
             if (
                 bool(forge_jira_assignee) is not bool(jira_assignee)
                 or jira_assignee
                 and forge_jira_assignee
-                and forge_jira_assignee not in (jira_assignee.key, jira_assignee.emailAddress)
+                and forge_jira_assignee != jira_assignee.emailAddress
             ):
                 log.info(
                     "%s: Changing assignee from %r to %r",
                     jira_issue.key,
-                    jira_assignee.key if jira_assignee else None,
+                    jira_assignee.emailAddress if jira_assignee else None,
                     forge_jira_assignee,
                 )
                 self._jira.assign_to_issue(jira_issue, forge_jira_assignee)
             else:
                 if jira_assignee:
                     log.debug(
-                        "%s: Not changing assignee from '%s <%s>' to %r",
+                        "%s: Not changing assignee from '%s' to %r",
                         jira_issue.key,
-                        jira_assignee.key,
                         jira_assignee.emailAddress,
                         forge_jira_assignee,
                     )
