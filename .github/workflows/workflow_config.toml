@@ -1,7 +1,7 @@
 # General configuration
 
 [general.jira]
-instance_url = "https://issues.redhat.com"  # JIRA instance URL
+instance_url = "https://redhat.atlassian.net"  # JIRA instance URL
 project = "CLE"  # Name of the project to sync tickets to
 username = "fedora-bots-admins@redhat.com"
 token = "$secrets.jira_token"  # API token to use for authentication
