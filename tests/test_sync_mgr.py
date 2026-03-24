@@ -355,13 +355,12 @@ class TestSyncManager:
             sync_mgr._jira.get_issues_by_labels.return_value, forge_issues
         )
 
-    @pytest.mark.parametrize("testcase", ("usermap-key", "usermap-email"))
-    def test_reconcile_jira_forge_issues(self, testcase, sync_mgr, caplog):
+    def test_reconcile_jira_forge_issues(self, sync_mgr, caplog):
         jira_issue_specs = [
             {},
             {
                 "fields": {
-                    "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
+                    "assignee": {"emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
                     "story_points": 0,
                     "priority": 0,
@@ -370,7 +369,7 @@ class TestSyncManager:
             {"fields": {"assignee": {}, "status": {"name": "IN_PROGRESS"}}},
             {
                 "fields": {
-                    "assignee": {"key": "jira_user", "emailAddress": "jira_user@example.com"},
+                    "assignee": {"emailAddress": "jira_user@example.com"},
                     "status": {"name": "IN_PROGRESS"},
                     "story_points": 0,
                     "priority": 0,
@@ -391,10 +390,7 @@ class TestSyncManager:
             for num, spec in enumerate(jira_issue_specs, 1)
         ]
 
-        if "usermap-email" in testcase:
-            mapped_jira_user = "jira_user@example.com"
-        else:
-            mapped_jira_user = "jira_user"
+        mapped_jira_user = "jira_user@example.com"
 
         mock_repo = mock_with_name(
             Repository,
@@ -443,14 +439,16 @@ class TestSyncManager:
         assert f"JIRA-0001: Changing assignee from None to '{mapped_jira_user}'" in caplog.text
         # Keep known forge <=> JIRA user
         assert (
-            "JIRA-0002: Not changing assignee from 'jira_user <jira_user@example.com>' to"
+            "JIRA-0002: Not changing assignee from 'jira_user@example.com' to"
             + f" '{mapped_jira_user}'"
             in caplog.text
         )
         # Unassign JIRA user without corresponding forge user
-        assert "JIRA-0003: Changing assignee from 'other_jira_user' to None" in caplog.text
+        assert (
+            "JIRA-0003: Changing assignee from 'other-address@example.com' to None" in caplog.text
+        )
         # Unassign JIRA user when forge issue is unassigned
-        assert "JIRA-0004: Changing assignee from 'jira_user' to None" in caplog.text
+        assert "JIRA-0004: Changing assignee from 'jira_user@example.com' to None" in caplog.text
         # Leave issue unassigned
         assert "JIRA-0005: Not assigning to None" in caplog.text
 
