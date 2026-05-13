@@ -1,6 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
-from random import choice
+from secrets import choice
 
 import pytest
 import tomlkit
@@ -256,9 +256,12 @@ def test_load_configuration(usermap_type: str, config_source: str, param_type: t
                     instance_def["usermap"] = usermaps[instance_name]
 
             if override:
-                for repo_def in instance_def["repositories"].values():
-                    repo_def["enabled"] = choice((True, False))  # noqa: S311
-                    repo_def["blocked_label"] = "Blocked, I say!"
+                for key, value in list(instance_def["repositories"].items()):
+                    new_dict = {
+                        "enabled": choice((True, False)),
+                        "blocked_label": "Blocked, I say!",
+                    }
+                    instance_def["repositories"][key] = new_dict | value
 
     tmp_config_file = tmp_path / "config.toml"
     with tmp_config_file.open("w") as fp:
