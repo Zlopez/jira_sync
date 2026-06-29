@@ -56,9 +56,8 @@ class JIRA:
         if run_mode == JiraRunMode.DRY_RUN:
             self._jira = None
         else:
-            self._jira = jira.client.JIRA(
-                str(jira_config.instance_url), basic_auth=(jira_config.username, jira_config.token)
-            )
+            auth = (jira_config.username, jira_config.token) if jira_config.token else None
+            self._jira = jira.client.JIRA(str(jira_config.instance_url), basic_auth=auth)
             # Establish that the connection is authenticated, will throw an exception without.
             self._jira.session()
 
