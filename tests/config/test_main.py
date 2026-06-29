@@ -1,6 +1,9 @@
+import shutil
+from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 from secrets import choice
+from typing import Any
 
 import pytest
 import tomlkit
@@ -32,6 +35,7 @@ EXPECTED_CONFIG = {
                 "new": "NEW",
             },
             "token": "token",
+            "token_file": None,
         }
     },
     "instances": {
@@ -39,6 +43,7 @@ EXPECTED_CONFIG = {
             "blocked_label": "blocked",
             "enabled": True,
             "token": None,
+            "token_file": None,
             "instance_api_url": None,
             "instance_url": "https://pagure.io/",
             "label": None,
@@ -84,6 +89,7 @@ EXPECTED_CONFIG = {
             "blocked_label": "blocked",
             "enabled": True,
             "token": None,
+            "token_file": None,
             "instance_api_url": "https://api.github.com/",
             "instance_url": "https://github.com/",
             "label": None,
@@ -128,6 +134,7 @@ EXPECTED_CONFIG = {
             "blocked_label": "blocked",
             "enabled": True,
             "token": None,
+            "token_file": None,
             "instance_api_url": "https://gitlab.com/api/v4",
             "instance_url": "https://gitlab.com/",
             "label": None,
@@ -172,6 +179,7 @@ EXPECTED_CONFIG = {
             "blocked_label": "blocked",
             "enabled": True,
             "token": None,
+            "token_file": None,
             "instance_url": "https://codeberg.org/",
             "instance_api_url": None,
             "label": None,
@@ -284,3 +292,39 @@ def test_load_configuration(usermap_type: str, config_source: str, param_type: t
 
     config_raw = config_model.model_dump(mode="json")
     assert config_raw == expected_config
+
+
+def test_load_configuration_secrets_files(tmp_path):
+    def _get_jira_and_instances(config_dict: dict[str, Any]) -> list[tuple[str, Any]]:
+        return list(config_dict["instances"].items()) + [("jira", config_dict["general"]["jira"])]
+
+    # Make a config file with loadable secrets
+    with CONFIG_PATH.open("r") as fp:
+        config_toml = tomlkit.load(fp)
+        for instance_name, instance_def in _get_jira_and_instances(config_toml):
+            with suppress(KeyError):
+                del instance_def["token"]
+            secret_path = tmp_path / f"{instance_name}.secret"
+            with open(secret_path, "w") as secret_fp:
+                secret_fp.write(f"{instance_name}-secret-token\n")
+            instance_def["token_file"] = secret_path.as_posix()
+
+    tmp_config_file = tmp_path / "config.toml"
+    with tmp_config_file.open("w") as fp:
+        tomlkit.dump(config_toml, fp)
+
+    for instance_name in config_toml["instances"].keys():
+        shutil.copy(
+            PROJECT_ROOT
+            / ".github"
+            / "workflows"
+            / f"{instance_name.replace('.', '')}_jira_usermap.toml",
+            tmp_path,
+        )
+
+    config_model = main.load_configuration(tmp_config_file.as_posix())
+
+    config_raw = config_model.model_dump(mode="json")
+
+    for instance_name, instance_def in _get_jira_and_instances(config_raw):
+        assert instance_def["token"] == f"{instance_name}-secret-token"

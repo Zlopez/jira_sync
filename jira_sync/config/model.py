@@ -20,11 +20,22 @@ class BlockValuesConfig(BaseModel):
     false: int
 
 
-class JiraConfig(BaseModel):
+class LoadableToken:
+    token: str | None = None
+    token_file: Path | None = None
+
+    @model_validator(mode="after")
+    def load_token_from_file(self) -> Self:
+        if self.token_file and (not self.token or "$secrets" in self.token):
+            with open(self.token_file) as fh:
+                self.token = fh.read().strip()
+        return self
+
+
+class JiraConfig(BaseModel, LoadableToken):
     instance_url: HttpUrl
     project: str
     username: str
-    token: str
     default_issue_type: str
     label: str
     story_points_field: str = ""
@@ -55,13 +66,12 @@ class QueryRepoSpec(RepoConfig):
     labels_to_story_points: dict[str, int] | None = None
 
 
-class InstanceConfigBase(BaseModel):
+class InstanceConfigBase(BaseModel, LoadableToken):
     type: str
     name: str | None = None
     instance_url: HttpUrl
     instance_api_url: HttpUrl | None = None
     enabled: bool = True
-    token: str | None = None
     label: str | None = None
     blocked_label: str
     usermap: InlineUsermap | Path
