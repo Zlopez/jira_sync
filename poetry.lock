@@ -941,18 +941,22 @@ files = [
 
 [[package]]
 name = "dotwiz"
-version = "0.4.0"
-description = "DotWiz is a blazing fast dict subclass that enables accessing (nested) keys in dot notation."
+version = "0.5.0"
+description = "Dictionary wrapper providing dot notation access"
 optional = false
-python-versions = "*"
+python-versions = ">=3.11"
 groups = ["dev"]
 files = [
-    {file = "dotwiz-0.4.0-py2.py3-none-any.whl", hash = "sha256:8d6598dc2a217ac171f6d5eded060061de8ff2122df62d7b705787df295e021d"},
-    {file = "dotwiz-0.4.0.tar.gz", hash = "sha256:45c24633674f05c506fbacab44b3d50e9392d89a18fd65a4150f634d14b1c36f"},
+    {file = "dotwiz-0.5.0-py2.py3-none-any.whl", hash = "sha256:10d6b1106ad78acc67ad3546d479e14a650eef405833090e83756ac257beac79"},
+    {file = "dotwiz-0.5.0.tar.gz", hash = "sha256:606b6a15f66e8ead7da0f4ca1d664f2fce1a83b44936560be901c319dadf7cb3"},
 ]
 
 [package.dependencies]
 pyheck = "0.1.5"
+
+[package.extras]
+dev = ["build", "dotwiz[test]", "flake8 (>=7)", "twine"]
+test = ["pytest (>=8)", "pytest-benchmark (>=5)", "pytest-cov (>=6)"]
 
 [[package]]
 name = "dulwich"
@@ -3186,4 +3190,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "1901b861ce17f6f1c784e9dcb567e6aed2f272e87584b49e1383bb1f9ad72777"
+content-hash = "51d682528d4acf824beef8bc4adb1f9e6947e9d055fa94cda18bcaaae0e6a5da"
